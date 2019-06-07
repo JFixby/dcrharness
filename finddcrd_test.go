@@ -1,4 +1,4 @@
-package dcrregtest
+package dcrtest
 
 import (
 	"github.com/jfixby/pin"
