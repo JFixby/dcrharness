@@ -8,7 +8,7 @@ package memwallet
 import (
 	"bytes"
 	"fmt"
-	"github.com/jfixby/cointest"
+	"github.com/jfixby/coinharness"
 	"github.com/jfixby/pin"
 	"sync"
 	"time"
@@ -67,16 +67,16 @@ type InMemoryWallet struct {
 	nodeRPC *rpcclient.Client
 
 	sync.RWMutex
-	RPCClientFactory cointest.RPCClientFactory
+	RPCClientFactory coinharness.RPCClientFactory
 }
 
 // Network returns current network of the wallet
-func (wallet *InMemoryWallet) Network() cointest.Network {
+func (wallet *InMemoryWallet) Network() coinharness.Network {
 	return wallet.net
 }
 
 // Start wallet process
-func (wallet *InMemoryWallet) Start(args *cointest.TestWalletStartArgs) error {
+func (wallet *InMemoryWallet) Start(args *coinharness.TestWalletStartArgs) error {
 	handlers := &rpcclient.NotificationHandlers{}
 
 	// If a handler for the OnBlockConnected/OnBlockDisconnected callback
@@ -105,7 +105,7 @@ func (wallet *InMemoryWallet) Start(args *cointest.TestWalletStartArgs) error {
 
 	//handlers.OnClientConnected = wallet.onDcrdConnect
 
-	wallet.nodeRPC = cointest.NewRPCConnection(wallet.RPCClientFactory, args.NodeRPCConfig, 5, handlers).(*rpcclient.Client)
+	wallet.nodeRPC = coinharness.NewRPCConnection(wallet.RPCClientFactory, args.NodeRPCConfig, 5, handlers).(*rpcclient.Client)
 	pin.AssertNotNil("nodeRPC", wallet.nodeRPC)
 
 	// Filter transactions that pay to the coinbase associated with the
@@ -393,7 +393,7 @@ func (wallet *InMemoryWallet) newAddress() (dcrutil.Address, error) {
 // NewAddress returns a fresh address spendable by the wallet.
 //
 // This function is safe for concurrent access.
-func (wallet *InMemoryWallet) NewAddress(_ *cointest.NewAddressArgs) (cointest.Address, error) {
+func (wallet *InMemoryWallet) NewAddress(_ *coinharness.NewAddressArgs) (coinharness.Address, error) {
 	wallet.Lock()
 	defer wallet.Unlock()
 
@@ -472,8 +472,8 @@ func (wallet *InMemoryWallet) fundTx(tx *wire.MsgTx, amt dcrutil.Amount, feeRate
 // SendOutputs creates, then sends a transaction paying to the specified output
 // while observing the passed fee rate. The passed fee rate should be expressed
 // in satoshis-per-byte.
-func (wallet *InMemoryWallet) SendOutputs(args cointest.SendOutputsArgs) (cointest.SentOutputsHash, error) {
-	arg2 := &cointest.CreateTransactionArgs{
+func (wallet *InMemoryWallet) SendOutputs(args coinharness.SendOutputsArgs) (coinharness.SentOutputsHash, error) {
+	arg2 := &coinharness.CreateTransactionArgs{
 		Outputs: args.Outputs,
 		FeeRate: args.FeeRate,
 	}
@@ -492,13 +492,13 @@ func (wallet *InMemoryWallet) SendOutputsWithoutChange(outputs []*wire.TxOut,
 	feeRate dcrutil.Amount) (*chainhash.Hash, error) {
 
 	//cast list
-	b := make([]cointest.OutputTx, len(outputs))
+	b := make([]coinharness.OutputTx, len(outputs))
 	{
 		for i := range outputs {
 			b[i] = outputs[i]
 		}
 	}
-	args := &cointest.CreateTransactionArgs{
+	args := &coinharness.CreateTransactionArgs{
 		Outputs: b,
 		FeeRate: feeRate,
 	}
@@ -516,7 +516,7 @@ func (wallet *InMemoryWallet) SendOutputsWithoutChange(outputs []*wire.TxOut,
 // include a change output indicated by the change boolean.
 //
 // This function is safe for concurrent access.
-func (wallet *InMemoryWallet) CreateTransaction(args *cointest.CreateTransactionArgs) (cointest.CreatedTransactionTx, error) {
+func (wallet *InMemoryWallet) CreateTransaction(args *coinharness.CreateTransactionArgs) (coinharness.CreatedTransactionTx, error) {
 
 	wallet.Lock()
 	defer wallet.Unlock()
@@ -580,7 +580,7 @@ func (wallet *InMemoryWallet) CreateTransaction(args *cointest.CreateTransaction
 // being selected to fund a transaction via the CreateTransaction method.
 //
 // This function is safe for concurrent access.
-func (wallet *InMemoryWallet) UnlockOutputs(inputs []cointest.InputTx) {
+func (wallet *InMemoryWallet) UnlockOutputs(inputs []coinharness.InputTx) {
 	wallet.Lock()
 	defer wallet.Unlock()
 
@@ -597,7 +597,7 @@ func (wallet *InMemoryWallet) UnlockOutputs(inputs []cointest.InputTx) {
 // ConfirmedBalance returns the confirmed balance of the wallet.
 //
 // This function is safe for concurrent access.
-func (wallet *InMemoryWallet) ConfirmedBalance() cointest.CoinsAmount {
+func (wallet *InMemoryWallet) ConfirmedBalance() coinharness.CoinsAmount {
 	wallet.RLock()
 	defer wallet.RUnlock()
 

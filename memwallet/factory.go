@@ -11,7 +11,7 @@ import (
 	"github.com/decred/dcrd/dcrutil"
 	"github.com/decred/dcrd/hdkeychain"
 	"github.com/decred/dcrd/wire"
-	"github.com/jfixby/cointest"
+	"github.com/jfixby/coinharness"
 	"github.com/jfixby/dcrtest"
 	"github.com/jfixby/pin"
 )
@@ -21,7 +21,7 @@ type WalletFactory struct {
 }
 
 // NewWallet creates and returns a fully initialized instance of the InMemoryWallet.
-func (f *WalletFactory) NewWallet(cfg *cointest.TestWalletConfig) cointest.TestWallet {
+func (f *WalletFactory) NewWallet(cfg *coinharness.TestWalletConfig) coinharness.Wallet {
 	pin.AssertNotNil("ActiveNet", cfg.ActiveNet)
 	w, e := newMemWallet(cfg.ActiveNet.(*chaincfg.Params), cfg.Seed.([chainhash.HashSize + 4]byte))
 	pin.CheckTestSetupMalfunction(e)

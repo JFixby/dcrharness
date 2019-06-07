@@ -8,8 +8,8 @@ package nodecls
 import (
 	"fmt"
 	"github.com/decred/dcrd/chaincfg"
-	"github.com/jfixby/cointest"
-	"github.com/jfixby/cointest/consolenode"
+	"github.com/jfixby/coinharness"
+	"github.com/jfixby/coinharness/consolenode"
 	"github.com/jfixby/dcrtest"
 	"github.com/jfixby/pin"
 	"github.com/jfixby/pin/commandline"
@@ -25,7 +25,7 @@ type ConsoleNodeFactory struct {
 }
 
 // NewNode creates and returns a fully initialized instance of the ConsoleNode.
-func (factory *ConsoleNodeFactory) NewNode(config *cointest.TestNodeConfig) cointest.TestNode {
+func (factory *ConsoleNodeFactory) NewNode(config *coinharness.TestNodeConfig) coinharness.Node {
 	pin.AssertNotNil("WorkingDir", config.WorkingDir)
 	pin.AssertNotEmpty("WorkingDir", config.WorkingDir)
 
@@ -75,7 +75,7 @@ func (cook *DcrdConsoleCommandCook) CookArguments(par *consolenode.ConsoleComman
 }
 
 // networkFor resolves network argument for node and wallet console commands
-func networkFor(net cointest.Network) string {
+func networkFor(net coinharness.Network) string {
 	if net == &chaincfg.SimNetParams {
 		return "simnet"
 	}

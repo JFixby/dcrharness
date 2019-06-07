@@ -8,7 +8,7 @@ package dcrtest
 import (
 	"fmt"
 	"github.com/decred/dcrd/rpcclient"
-	"github.com/jfixby/cointest"
+	"github.com/jfixby/coinharness"
 	"github.com/jfixby/pin"
 	"io/ioutil"
 )
@@ -16,7 +16,7 @@ import (
 type DcrRPCClientFactory struct {
 }
 
-func (f *DcrRPCClientFactory) NewRPCConnection(config cointest.RPCConnectionConfig, handlers cointest.RPCClientNotificationHandlers) (cointest.RPCClient, error) {
+func (f *DcrRPCClientFactory) NewRPCConnection(config coinharness.RPCConnectionConfig, handlers coinharness.RPCClientNotificationHandlers) (coinharness.RPCClient, error) {
 	var h *rpcclient.NotificationHandlers
 	if handlers != nil {
 		h = handlers.
