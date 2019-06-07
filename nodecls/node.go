@@ -10,7 +10,7 @@ import (
 	"github.com/decred/dcrd/chaincfg"
 	"github.com/jfixby/coinharness"
 	"github.com/jfixby/coinharness/consolenode"
-	"github.com/jfixby/dcrtest"
+	"github.com/jfixby/dcrharness"
 	"github.com/jfixby/pin"
 	"github.com/jfixby/pin/commandline"
 	"path/filepath"
@@ -21,7 +21,7 @@ type ConsoleNodeFactory struct {
 	// NodeExecutablePathProvider returns path to the dcrd executable
 	NodeExecutablePathProvider commandline.ExecutablePathProvider
 	ConsoleCommandCook         DcrdConsoleCommandCook
-	RPCClientFactory           dcrtest.DcrRPCClientFactory
+	RPCClientFactory           dcrharness.DcrRPCClientFactory
 }
 
 // NewNode creates and returns a fully initialized instance of the ConsoleNode.

@@ -12,7 +12,7 @@ import (
 	"github.com/decred/dcrd/hdkeychain"
 	"github.com/decred/dcrd/wire"
 	"github.com/jfixby/coinharness"
-	"github.com/jfixby/dcrtest"
+	"github.com/jfixby/dcrharness"
 	"github.com/jfixby/pin"
 )
 
@@ -54,7 +54,7 @@ func newMemWallet(net *chaincfg.Params, harnessHDSeed [chainhash.HashSize + 4]by
 	addrs := make(map[uint32]dcrutil.Address)
 	addrs[0] = coinbaseAddr
 
-	clientFac := &dcrtest.DcrRPCClientFactory{}
+	clientFac := &dcrharness.DcrRPCClientFactory{}
 
 	return &InMemoryWallet{
 		net:               net,
