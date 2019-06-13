@@ -472,7 +472,7 @@ func (wallet *InMemoryWallet) fundTx(tx *wire.MsgTx, amt dcrutil.Amount, feeRate
 // SendOutputs creates, then sends a transaction paying to the specified output
 // while observing the passed fee rate. The passed fee rate should be expressed
 // in satoshis-per-byte.
-func (wallet *InMemoryWallet) SendOutputs(args coinharness.SendOutputsArgs) (coinharness.SentOutputsHash, error) {
+func (wallet *InMemoryWallet) SendOutputs(args *coinharness.SendOutputsArgs) (coinharness.SentOutputsHash, error) {
 	arg2 := &coinharness.CreateTransactionArgs{
 		Outputs: args.Outputs,
 		FeeRate: args.FeeRate,
