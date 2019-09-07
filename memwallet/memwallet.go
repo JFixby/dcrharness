@@ -9,6 +9,7 @@ import (
 	"bytes"
 	"fmt"
 	"github.com/jfixby/coinharness"
+	"github.com/jfixby/dcrharness"
 	"github.com/jfixby/pin"
 	"sync"
 	"time"
@@ -64,7 +65,7 @@ type InMemoryWallet struct {
 
 	net *chaincfg.Params
 
-	nodeRPC *rpcclient.Client
+	nodeRPC coinharness.RPCClient
 
 	sync.RWMutex
 	RPCClientFactory coinharness.RPCClientFactory
@@ -105,7 +106,7 @@ func (wallet *InMemoryWallet) Start(args *coinharness.TestWalletStartArgs) error
 
 	//handlers.OnClientConnected = wallet.onDcrdConnect
 
-	wallet.nodeRPC = coinharness.NewRPCConnection(wallet.RPCClientFactory, args.NodeRPCConfig, 5, handlers).(*rpcclient.Client)
+	wallet.nodeRPC = coinharness.NewRPCConnection(wallet.RPCClientFactory, args.NodeRPCConfig, 5, handlers)
 	pin.AssertNotNil("nodeRPC", wallet.nodeRPC)
 
 	// Filter transactions that pay to the coinbase associated with the
@@ -126,7 +127,7 @@ func (wallet *InMemoryWallet) updateTxFilter() {
 	for _, v := range wallet.addrs {
 		filterAddrs = append(filterAddrs, v)
 	}
-	err := wallet.nodeRPC.LoadTxFilter(true, filterAddrs, nil)
+	err := wallet.nodeRPC.Internal().(*rpcclient.Client).LoadTxFilter(true, filterAddrs, nil)
 	pin.CheckTestSetupMalfunction(err)
 }
 
@@ -142,7 +143,7 @@ func (wallet *InMemoryWallet) Stop() {
 // Sync block until the wallet has fully synced up to the tip of the main
 // chain.
 func (wallet *InMemoryWallet) Sync() {
-	_, height, err := wallet.nodeRPC.GetBestBlock()
+	_, height, err := wallet.nodeRPC.Internal().(*rpcclient.Client).GetBestBlock()
 	pin.CheckTestSetupMalfunction(err)
 	ticker := time.NewTicker(time.Millisecond * 100)
 	for range ticker.C {
@@ -378,7 +379,7 @@ func (wallet *InMemoryWallet) newAddress() (dcrutil.Address, error) {
 		return nil, err
 	}
 
-	err = wallet.nodeRPC.LoadTxFilter(false, []dcrutil.Address{addr}, nil)
+	err = wallet.nodeRPC.Internal().(*rpcclient.Client).LoadTxFilter(false, []dcrutil.Address{addr}, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -472,7 +473,7 @@ func (wallet *InMemoryWallet) fundTx(tx *wire.MsgTx, amt dcrutil.Amount, feeRate
 // SendOutputs creates, then sends a transaction paying to the specified output
 // while observing the passed fee rate. The passed fee rate should be expressed
 // in satoshis-per-byte.
-func (wallet *InMemoryWallet) SendOutputs(args *coinharness.SendOutputsArgs) (coinharness.SentOutputsHash, error) {
+func (wallet *InMemoryWallet) SendOutputs(args *coinharness.SendOutputsArgs) (coinharness.Hash, error) {
 	arg2 := &coinharness.CreateTransactionArgs{
 		Outputs: args.Outputs,
 		FeeRate: args.FeeRate,
@@ -482,7 +483,7 @@ func (wallet *InMemoryWallet) SendOutputs(args *coinharness.SendOutputsArgs) (co
 		return nil, err
 	}
 
-	return wallet.nodeRPC.SendRawTransaction(tx.(*wire.MsgTx), true)
+	return wallet.nodeRPC.SendRawTransaction(tx, true)
 }
 
 // SendOutputsWithoutChange creates and sends a transaction that pays to the
@@ -495,19 +496,21 @@ func (wallet *InMemoryWallet) SendOutputsWithoutChange(outputs []*wire.TxOut,
 	b := make([]coinharness.OutputTx, len(outputs))
 	{
 		for i := range outputs {
-			b[i] = outputs[i]
+			b[i] = &dcrharness.OutputTx{outputs[i]}
 		}
 	}
 	args := &coinharness.CreateTransactionArgs{
 		Outputs: b,
 		FeeRate: feeRate,
+		Change:  false,
 	}
 	tx, err := wallet.CreateTransaction(args)
 	if err != nil {
 		return nil, err
 	}
 
-	return wallet.nodeRPC.SendRawTransaction(tx.(*wire.MsgTx), true)
+	r, x := wallet.nodeRPC.SendRawTransaction(tx, true)
+	return r.(*chainhash.Hash), x
 }
 
 // CreateTransaction returns a fully signed transaction paying to the specified
@@ -527,8 +530,8 @@ func (wallet *InMemoryWallet) CreateTransaction(args *coinharness.CreateTransact
 	// selection shortly below.
 	var outputAmt dcrutil.Amount
 	for _, output := range args.Outputs {
-		outputAmt += dcrutil.Amount(output.(*wire.TxOut).Value)
-		tx.AddTxOut(output.(*wire.TxOut))
+		outputAmt += dcrutil.Amount(output.Value())
+		tx.AddTxOut(output.(*dcrharness.OutputTx).Parent)
 	}
 
 	// Attempt to fund the transaction with spendable utxos.
@@ -572,8 +575,7 @@ func (wallet *InMemoryWallet) CreateTransaction(args *coinharness.CreateTransact
 	for _, utxo := range spentOutputs {
 		utxo.isLocked = true
 	}
-
-	return tx, nil
+	return &dcrharness.CreatedTransactionTx{tx}, nil
 }
 
 // UnlockOutputs unlocks any outputs which were previously locked due to
@@ -585,7 +587,7 @@ func (wallet *InMemoryWallet) UnlockOutputs(inputs []coinharness.InputTx) {
 	defer wallet.Unlock()
 
 	for _, input := range inputs {
-		utxo, ok := wallet.utxos[input.(*wire.TxIn).PreviousOutPoint]
+		utxo, ok := wallet.utxos[input.PreviousOutPoint().(wire.OutPoint)]
 		if !ok {
 			continue
 		}
@@ -613,4 +615,23 @@ func (wallet *InMemoryWallet) ConfirmedBalance() coinharness.CoinsAmount {
 	}
 
 	return balance
+}
+
+func (wallet *InMemoryWallet) RPCClient() *coinharness.RPCConnection {
+	panic("Method not supported")
+}
+
+func (wallet *InMemoryWallet) CreateNewAccount(accountName string) error {
+	panic("")
+}
+
+func (wallet *InMemoryWallet) GetBalance(accountName string) (coinharness.CoinsAmount, error) {
+	panic("")
+}
+
+func (wallet *InMemoryWallet) GetNewAddress(accountName string) (coinharness.Address, error) {
+	panic("")
+}
+func (wallet *InMemoryWallet) ValidateAddress(address coinharness.Address) (*coinharness.ValidateAddressResult, error) {
+	panic("")
 }

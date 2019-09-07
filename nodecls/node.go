@@ -13,7 +13,6 @@ import (
 	"github.com/jfixby/dcrharness"
 	"github.com/jfixby/pin"
 	"github.com/jfixby/pin/commandline"
-	"path/filepath"
 )
 
 // ConsoleNodeFactory produces a new ConsoleNode-instance upon request
