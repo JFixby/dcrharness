@@ -6,8 +6,6 @@
 package nodecls
 
 import (
-	"fmt"
-	"github.com/decred/dcrd/chaincfg"
 	"github.com/jfixby/coinharness"
 	"github.com/jfixby/coinharness/consolenode"
 	"github.com/jfixby/dcrharness"
@@ -28,12 +26,15 @@ func (factory *ConsoleNodeFactory) NewNode(config *coinharness.TestNodeConfig) c
 	pin.AssertNotNil("WorkingDir", config.WorkingDir)
 	pin.AssertNotEmpty("WorkingDir", config.WorkingDir)
 
+	pin.AssertNotEmpty("NodeUser", config.NodeUser)
+	pin.AssertNotEmpty("NodePassword", config.NodePassword)
+
 	args := &consolenode.NewConsoleNodeArgs{
 		ClientFac:                  &factory.RPCClientFactory,
 		ConsoleCommandCook:         &factory.ConsoleCommandCook,
 		NodeExecutablePathProvider: factory.NodeExecutablePathProvider,
-		RpcUser:                    "user",
-		RpcPass:                    "pass",
+		RpcUser:                    config.NodeUser,
+		RpcPass:                    config.NodePassword,
 		AppDir:                     config.WorkingDir,
 		P2PHost:                    config.P2PHost,
 		P2PPort:                    config.P2PPort,
@@ -67,29 +68,8 @@ func (cook *DcrdConsoleCommandCook) CookArguments(par *consolenode.ConsoleComman
 	if par.MiningAddress != nil {
 		result["miningaddr"] = par.MiningAddress.String()
 	}
-	result[networkFor(par.Network)] = commandline.NoArgumentValue
+	result[dcrharness.NetworkFor(par.Network)] = commandline.NoArgumentValue
 
 	commandline.ArgumentsCopyTo(par.ExtraArguments, result)
 	return result
-}
-
-// networkFor resolves network argument for node and wallet console commands
-func networkFor(net coinharness.Network) string {
-	if net == &chaincfg.SimNetParams {
-		return "simnet"
-	}
-	if net == &chaincfg.TestNet3Params {
-		return "testnet"
-	}
-	if net == &chaincfg.RegNetParams {
-		return "regnet"
-	}
-	if net == &chaincfg.MainNetParams {
-		// no argument needed for the MainNet
-		return commandline.NoArgument
-	}
-
-	// should never reach this line, report violation
-	pin.ReportTestSetupMalfunction(fmt.Errorf("unknown network: %v ", net))
-	return ""
 }
