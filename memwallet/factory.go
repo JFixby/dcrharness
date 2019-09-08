@@ -8,20 +8,20 @@ package memwallet
 import (
 	"github.com/decred/dcrd/chaincfg"
 	"github.com/decred/dcrd/chaincfg/chainhash"
-	"github.com/decred/dcrd/dcrutil"
 	"github.com/decred/dcrd/hdkeychain"
 	"github.com/decred/dcrd/wire"
 	"github.com/jfixby/coinharness"
-	"github.com/jfixby/dcrharness"
 	"github.com/jfixby/pin"
+	"github.com/decred/dcrd/dcrutil"
+	"github.com/jfixby/dcrharness"
 )
 
-// WalletFactory produces a new InMemoryWallet-instance upon request
-type WalletFactory struct {
+// MemWalletFactory produces a new InMemoryWallet-instance upon request
+type MemWalletFactory struct {
 }
 
 // NewWallet creates and returns a fully initialized instance of the InMemoryWallet.
-func (f *WalletFactory) NewWallet(cfg *coinharness.TestWalletConfig) coinharness.Wallet {
+func (f *MemWalletFactory) NewWallet(cfg *coinharness.TestWalletConfig) coinharness.Wallet {
 	pin.AssertNotNil("ActiveNet", cfg.ActiveNet)
 	w, e := newMemWallet(cfg.ActiveNet.(*chaincfg.Params), cfg.Seed.([chainhash.HashSize + 4]byte))
 	pin.CheckTestSetupMalfunction(e)
