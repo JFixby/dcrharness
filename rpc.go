@@ -130,6 +130,15 @@ func (c *DCRPCClient) GetNewAddress(account string) (coinharness.Address, error)
 	return result, nil
 }
 
+func (c *DCRPCClient) GetBuildVersion() (coinharness.BuildVersion, error) {
+	//legacy, err := c.rpc.GetBuildVersion()
+	//if err != nil {
+	//	return nil, err
+	//}
+	//return legacy, nil
+	return nil, fmt.Errorf("not implemented yet")
+}
+
 type DCRAddress struct {
 	Address dcrutil.Address
 }
