@@ -136,7 +136,7 @@ func (c *DCRPCClient) GetBuildVersion() (coinharness.BuildVersion, error) {
 	//	return nil, err
 	//}
 	//return legacy, nil
-	return nil, fmt.Errorf("not implemented yet")
+	return nil, fmt.Errorf("decred does not support this feature (GetBuildVersion)")
 }
 
 type DCRAddress struct {
