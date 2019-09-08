@@ -142,16 +142,15 @@ func (wallet *InMemoryWallet) Stop() {
 
 // Sync block until the wallet has fully synced up to the tip of the main
 // chain.
-func (wallet *InMemoryWallet) Sync() {
-	_, height, err := wallet.nodeRPC.Internal().(*rpcclient.Client).GetBestBlock()
-	pin.CheckTestSetupMalfunction(err)
+func (wallet *InMemoryWallet) Sync(desiredHeight int64) int64 {
 	ticker := time.NewTicker(time.Millisecond * 100)
 	for range ticker.C {
 		walletHeight := wallet.SyncedHeight()
-		if walletHeight == height {
+		if walletHeight >= desiredHeight {
 			break
 		}
 	}
+	return wallet.SyncedHeight()
 }
 
 // Dispose is no needed for InMemoryWallet

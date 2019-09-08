@@ -130,6 +130,10 @@ func (c *DCRPCClient) GetNewAddress(account string) (coinharness.Address, error)
 	return result, nil
 }
 
+func (c *DCRPCClient) GetBestBlock() (coinharness.Hash, int64, error) {
+	return c.rpc.GetBestBlock()
+}
+
 func (c *DCRPCClient) GetBuildVersion() (coinharness.BuildVersion, error) {
 	//legacy, err := c.rpc.GetBuildVersion()
 	//if err != nil {
