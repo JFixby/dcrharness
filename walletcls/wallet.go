@@ -53,8 +53,8 @@ type WalletConsoleCommandCook struct {
 func (cook *WalletConsoleCommandCook) CookArguments(par *consolewallet.ConsoleCommandParams) map[string]interface{} {
 	result := make(map[string]interface{})
 
-	result["pfcdusername"] = par.NodeRpcUser
-	result["pfcdpassword"] = par.NodeRpcPass
+	result["dcrdusername"] = par.NodeRpcUser
+	result["dcrdpassword"] = par.NodeRpcPass
 	result["username"] = par.WalletRpcUser
 	result["password"] = par.WalletRpcPass
 	result["rpcconnect"] = par.RpcConnect
