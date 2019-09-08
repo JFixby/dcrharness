@@ -398,7 +398,13 @@ func (wallet *InMemoryWallet) NewAddress(_ *coinharness.NewAddressArgs) (coinhar
 	wallet.Lock()
 	defer wallet.Unlock()
 
-	return wallet.newAddress()
+	add, err := wallet.newAddress()
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &dcrharness.DCRAddress{Address: add}, nil
 }
 
 // fundTx attempts to fund a transaction sending amt coins.  The coins are

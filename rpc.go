@@ -2,7 +2,9 @@ package dcrharness
 
 import (
 	"fmt"
+	"github.com/decred/dcrd/chaincfg"
 	"github.com/decred/dcrd/dcrjson"
+	"github.com/decred/dcrd/dcrutil"
 	"github.com/decred/dcrd/rpcclient"
 	"github.com/jfixby/coinharness"
 	"github.com/jfixby/pin"
@@ -119,5 +121,25 @@ func NewRPCClient(config *rpcclient.ConnConfig, handlers *rpcclient.Notification
 }
 
 func (c *DCRPCClient) GetNewAddress(account string) (coinharness.Address, error) {
-	return c.rpc.GetNewAddress(account)
+	legacy, err := c.rpc.GetNewAddress(account)
+	if err != nil {
+		return nil, err
+	}
+
+	result := &DCRAddress{Address: legacy}
+	return result, nil
+}
+
+type DCRAddress struct {
+	Address dcrutil.Address
+}
+
+//String() string
+//IsForNet(network Network) bool
+func (c *DCRAddress) String() string {
+	return c.Address.String()
+}
+
+func (c *DCRAddress) IsForNet(net coinharness.Network) bool {
+	return c.Address.IsForNet(net.(*chaincfg.Params))
 }
