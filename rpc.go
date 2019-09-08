@@ -134,10 +134,12 @@ type DCRAddress struct {
 	Address dcrutil.Address
 }
 
-//String() string
-//IsForNet(network Network) bool
 func (c *DCRAddress) String() string {
 	return c.Address.String()
+}
+
+func (c *DCRAddress) Internal() interface{} {
+	return c.Address
 }
 
 func (c *DCRAddress) IsForNet(net coinharness.Network) bool {
