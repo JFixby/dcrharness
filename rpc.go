@@ -134,6 +134,18 @@ func (c *DCRPCClient) GetBestBlock() (coinharness.Hash, int64, error) {
 	return c.rpc.GetBestBlock()
 }
 
+func (c *DCRPCClient) ConfirmedBalance() coinharness.CoinsAmount {
+	panic("")
+}
+
+func (c *DCRPCClient) CreateNewAccount(account string) error {
+	return c.rpc.CreateNewAccount(account)
+}
+
+func (c *DCRPCClient) CreateTransaction(*coinharness.CreateTransactionArgs) (coinharness.CreatedTransactionTx, error) {
+	panic("")
+}
+
 func (c *DCRPCClient) GetBuildVersion() (coinharness.BuildVersion, error) {
 	//legacy, err := c.rpc.GetBuildVersion()
 	//if err != nil {
