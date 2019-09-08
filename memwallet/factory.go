@@ -8,12 +8,12 @@ package memwallet
 import (
 	"github.com/decred/dcrd/chaincfg"
 	"github.com/decred/dcrd/chaincfg/chainhash"
+	"github.com/decred/dcrd/dcrutil"
 	"github.com/decred/dcrd/hdkeychain"
 	"github.com/decred/dcrd/wire"
 	"github.com/jfixby/coinharness"
-	"github.com/jfixby/pin"
-	"github.com/decred/dcrd/dcrutil"
 	"github.com/jfixby/dcrharness"
+	"github.com/jfixby/pin"
 )
 
 // MemWalletFactory produces a new InMemoryWallet-instance upon request
