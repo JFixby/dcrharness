@@ -130,12 +130,37 @@ func (c *DCRPCClient) GetNewAddress(account string) (coinharness.Address, error)
 	return result, nil
 }
 
-func (c *DCRPCClient) GetBestBlock() (coinharness.Hash, int64, error) {
-	return c.rpc.GetBestBlock()
+func (c *DCRPCClient) ValidateAddress(address coinharness.Address) (*coinharness.ValidateAddressResult, error) {
+	legacy, err := c.rpc.ValidateAddress(address.Internal().(dcrutil.Address))
+	// *dcrjson.ValidateAddressWalletResult
+	if err != nil {
+		return nil, err
+	}
+	result := &coinharness.ValidateAddressResult{
+		Address:      legacy.Address,
+		Account:      legacy.Account,
+		IsValid:      legacy.IsValid,
+		IsMine:       legacy.IsMine,
+		IsCompressed: legacy.IsCompressed,
+	}
+	return result, nil
 }
 
-func (c *DCRPCClient) ConfirmedBalance() coinharness.CoinsAmount {
-	panic("")
+func (c *DCRPCClient) GetBalance(account string) (*coinharness.GetBalanceResult, error) {
+	legacy, err := c.rpc.GetBalance(account)
+	// *dcrjson.ValidateAddressWalletResult
+	if err != nil {
+		return nil, err
+	}
+	result := &coinharness.GetBalanceResult{
+		BlockHash:      legacy.BlockHash,
+		TotalSpendable: legacy.TotalSpendable,
+	}
+	return result, nil
+}
+
+func (c *DCRPCClient) GetBestBlock() (coinharness.Hash, int64, error) {
+	return c.rpc.GetBestBlock()
 }
 
 func (c *DCRPCClient) CreateNewAccount(account string) error {

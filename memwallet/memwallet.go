@@ -587,7 +587,7 @@ func (wallet *InMemoryWallet) CreateTransaction(args *coinharness.CreateTransact
 // being selected to fund a transaction via the CreateTransaction method.
 //
 // This function is safe for concurrent access.
-func (wallet *InMemoryWallet) UnlockOutputs(inputs []coinharness.InputTx) {
+func (wallet *InMemoryWallet) UnlockOutputs(inputs []coinharness.InputTx) error {
 	wallet.Lock()
 	defer wallet.Unlock()
 
@@ -599,15 +599,17 @@ func (wallet *InMemoryWallet) UnlockOutputs(inputs []coinharness.InputTx) {
 
 		utxo.isLocked = false
 	}
+
+	return nil
 }
 
-// ConfirmedBalance returns the confirmed balance of the wallet.
+// GetBalance returns the confirmed balance of the wallet.
 //
 // This function is safe for concurrent access.
-func (wallet *InMemoryWallet) ConfirmedBalance() coinharness.CoinsAmount {
+func (wallet *InMemoryWallet) GetBalance(account string) (*coinharness.GetBalanceResult, error) {
 	wallet.RLock()
 	defer wallet.RUnlock()
-
+	result := &coinharness.GetBalanceResult{}
 	var balance dcrutil.Amount
 	for _, utxo := range wallet.utxos {
 		// Prevent any immature or locked outputs from contributing to
@@ -619,7 +621,8 @@ func (wallet *InMemoryWallet) ConfirmedBalance() coinharness.CoinsAmount {
 		balance += utxo.value
 	}
 
-	return balance
+	result.TotalSpendable = balance
+	return result, nil
 }
 
 func (wallet *InMemoryWallet) RPCClient() *coinharness.RPCConnection {
@@ -627,10 +630,6 @@ func (wallet *InMemoryWallet) RPCClient() *coinharness.RPCConnection {
 }
 
 func (wallet *InMemoryWallet) CreateNewAccount(accountName string) error {
-	panic("")
-}
-
-func (wallet *InMemoryWallet) GetBalance(accountName string) (coinharness.CoinsAmount, error) {
 	panic("")
 }
 
