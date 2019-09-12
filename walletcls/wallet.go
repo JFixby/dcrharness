@@ -64,6 +64,7 @@ func (cook *WalletConsoleCommandCook) CookArguments(par *consolewallet.ConsoleCo
 	result["cafile"] = par.NodeCertFile
 	result["rpccert"] = par.CertFile
 	result["rpckey"] = par.KeyFile
+	result["nogrpc"] = commandline.NoArgumentValue
 
 	result[dcrharness.NetworkFor(par.Network)] = commandline.NoArgumentValue
 
