@@ -167,6 +167,27 @@ func (c *DCRPCClient) CreateNewAccount(account string) error {
 	return c.rpc.CreateNewAccount(account)
 }
 
+func (c *DCRPCClient) WalletLock() error {
+	return c.rpc.WalletLock()
+}
+
+func (c *DCRPCClient) WalletInfo() (*coinharness.WalletInfoResult, error) {
+	r, err := c.rpc.WalletInfo()
+	if err != nil {
+		return nil, err
+	}
+	result := &coinharness.WalletInfoResult{
+		Unlocked:        r.Unlocked,
+		DaemonConnected: r.DaemonConnected,
+		Voting:          r.DaemonConnected,
+	}
+	return result, nil
+}
+
+func (c *DCRPCClient) WalletUnlock(passphrase string, timeoutSecs int64) error {
+	return c.rpc.WalletPassphrase(passphrase, timeoutSecs)
+}
+
 func (c *DCRPCClient) CreateTransaction(*coinharness.CreateTransactionArgs) (coinharness.CreatedTransactionTx, error) {
 	panic("")
 }

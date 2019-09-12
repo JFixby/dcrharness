@@ -639,3 +639,15 @@ func (wallet *InMemoryWallet) GetNewAddress(accountName string) (coinharness.Add
 func (wallet *InMemoryWallet) ValidateAddress(address coinharness.Address) (*coinharness.ValidateAddressResult, error) {
 	panic("")
 }
+
+func (wallet *InMemoryWallet) WalletUnlock(password string, seconds int64) (error) {
+	return nil
+}
+func (wallet *InMemoryWallet) WalletInfo() (*coinharness.WalletInfoResult, error) {
+	return &coinharness.WalletInfoResult{
+		Unlocked: true,
+	}, nil
+}
+func (wallet *InMemoryWallet) WalletLock() ( error) {
+	return nil
+}
