@@ -1,8 +1,8 @@
 package dcrharness
 
 import (
-	"github.com/jfixby/coinharness"
 	"github.com/decred/dcrd/wire"
+	"github.com/jfixby/coinharness"
 )
 
 //------------------------------------------

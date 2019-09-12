@@ -640,7 +640,7 @@ func (wallet *InMemoryWallet) ValidateAddress(address coinharness.Address) (*coi
 	panic("")
 }
 
-func (wallet *InMemoryWallet) WalletUnlock(password string, seconds int64) (error) {
+func (wallet *InMemoryWallet) WalletUnlock(password string, seconds int64) error {
 	return nil
 }
 func (wallet *InMemoryWallet) WalletInfo() (*coinharness.WalletInfoResult, error) {
@@ -648,6 +648,6 @@ func (wallet *InMemoryWallet) WalletInfo() (*coinharness.WalletInfoResult, error
 		Unlocked: true,
 	}, nil
 }
-func (wallet *InMemoryWallet) WalletLock() ( error) {
+func (wallet *InMemoryWallet) WalletLock() error {
 	return nil
 }

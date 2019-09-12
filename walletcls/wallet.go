@@ -3,9 +3,9 @@ package walletcls
 import (
 	"github.com/jfixby/coinharness"
 	"github.com/jfixby/coinharness/consolewallet"
+	"github.com/jfixby/dcrharness"
 	"github.com/jfixby/pin"
 	"github.com/jfixby/pin/commandline"
-	"github.com/jfixby/dcrharness"
 )
 
 // ConsoleWalletFactory produces a new ConsoleWallet-instance upon request
