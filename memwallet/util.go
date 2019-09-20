@@ -10,6 +10,7 @@ import (
 	"github.com/decred/dcrd/dcrec/secp256k1"
 	"github.com/decred/dcrd/dcrutil"
 	"github.com/decred/dcrd/wire"
+	"github.com/jfixby/coinharness"
 )
 
 const chainUpdateSignal = "chainUpdateSignal"
@@ -49,10 +50,10 @@ func (u *utxo) isMature(height int64) bool {
 }
 
 // keyToAddr maps the passed private to corresponding p2pkh address.
-func keyToAddr(key *secp256k1.PrivateKey, net *chaincfg.Params) (dcrutil.Address, error) {
+func keyToAddr(key *secp256k1.PrivateKey, net coinharness.Network) (dcrutil.Address, error) {
 	pubKey := (*secp256k1.PublicKey)(&key.PublicKey)
 	serializedKey := pubKey.SerializeCompressed()
-	pubKeyAddr, err := dcrutil.NewAddressSecpPubKey(serializedKey, net)
+	pubKeyAddr, err := dcrutil.NewAddressSecpPubKey(serializedKey, net.Params().(*chaincfg.Params))
 	if err != nil {
 		return nil, err
 	}

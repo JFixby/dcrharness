@@ -10,16 +10,16 @@ import (
 
 // networkFor resolves network argument for node and wallet console commands
 func NetworkFor(net coinharness.Network) string {
-	if net == &chaincfg.SimNetParams {
+	if net.Params() == &chaincfg.SimNetParams {
 		return "simnet"
 	}
-	if net == &chaincfg.TestNet3Params {
+	if net.Params() == &chaincfg.TestNet3Params {
 		return "testnet"
 	}
-	if net == &chaincfg.RegNetParams {
+	if net.Params() == &chaincfg.RegNetParams {
 		return "regnet"
 	}
-	if net == &chaincfg.MainNetParams {
+	if net.Params() == &chaincfg.MainNetParams {
 		// no argument needed for the MainNet
 		return commandline.NoArgument
 	}

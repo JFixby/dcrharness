@@ -15,7 +15,6 @@ import (
 	"time"
 
 	"github.com/decred/dcrd/blockchain"
-	"github.com/decred/dcrd/chaincfg"
 	"github.com/decred/dcrd/chaincfg/chainhash"
 	"github.com/decred/dcrd/dcrec/secp256k1"
 	"github.com/decred/dcrd/dcrutil"
@@ -63,7 +62,7 @@ type InMemoryWallet struct {
 
 	chainMtx sync.Mutex
 
-	net *chaincfg.Params
+	net coinharness.Network
 
 	nodeRPC coinharness.RPCClient
 
@@ -284,7 +283,7 @@ func (wallet *InMemoryWallet) evalOutputs(outputs []*wire.TxOut, txHash *chainha
 			// future.
 			var maturityHeight int64
 			if isCoinbase {
-				maturityHeight = wallet.currentHeight + int64(wallet.net.CoinbaseMaturity)
+				maturityHeight = wallet.currentHeight + int64(wallet.net.CoinbaseMaturity())
 			}
 
 			op := wire.OutPoint{Hash: *txHash, Index: uint32(i)}
