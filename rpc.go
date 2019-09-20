@@ -3,6 +3,7 @@ package dcrharness
 import (
 	"fmt"
 	"github.com/decred/dcrd/chaincfg"
+	"github.com/decred/dcrd/chaincfg/chainhash"
 	"github.com/decred/dcrd/dcrjson"
 	"github.com/decred/dcrd/dcrutil"
 	"github.com/decred/dcrd/rpcclient"
@@ -44,6 +45,18 @@ type RPCClient struct {
 
 func (c *RPCClient) AddNode(args *coinharness.AddNodeArguments) error {
 	return c.rpc.AddNode(args.TargetAddr, args.Command.(rpcclient.AddNodeCommand))
+}
+
+func (c *RPCClient) LoadTxFilter(reload bool, addr []coinharness.Address) (error) {
+	addresses := []dcrutil.Address{}
+	for _, e := range addr {
+		addresses = append(addresses, e.Internal().(dcrutil.Address))
+	}
+	return c.rpc.LoadTxFilter(reload, addresses, nil)
+}
+
+func (c *RPCClient) SubmitBlock(block coinharness.Block) (error) {
+	return c.rpc.SubmitBlock(block.(*dcrutil.Block), nil)
 }
 
 func (c *RPCClient) Disconnect() {
@@ -92,6 +105,10 @@ func (c *RPCClient) SendRawTransaction(tx coinharness.CreatedTransactionTx, allo
 	txx := TransactionTxToRaw(tx)
 	r, e := c.rpc.SendRawTransaction(txx, allowHighFees)
 	return r, e
+}
+
+func (c *RPCClient) GetBlock(hash coinharness.Hash) (coinharness.Block, error) {
+	return c.rpc.GetBlock(hash.(*chainhash.Hash))
 }
 
 func (c *RPCClient) GetPeerInfo() ([]coinharness.PeerInfo, error) {
