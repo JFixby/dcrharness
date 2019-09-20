@@ -1,5 +1,3 @@
-
-
 package nodecls
 
 import (
