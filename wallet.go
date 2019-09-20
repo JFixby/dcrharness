@@ -8,6 +8,7 @@ package dcrharness
 import (
 	"encoding/binary"
 	"github.com/decred/dcrd/chaincfg/chainhash"
+	"github.com/jfixby/coinharness"
 )
 
 // hdSeed is the BIP 32 seed used by the InMemoryWallet to initialize it's
@@ -25,9 +26,9 @@ var hdSeed = [chainhash.HashSize]byte{
 // The wallet's final HD seed is: [hdSeed || salt]. This method
 // ensures that each harness instance uses a deterministic root seed
 // based on its salt.
-func NewTestSeed(salt uint32) [chainhash.HashSize + 4]byte {
+func NewTestSeed(salt uint32) /*[chainhash.HashSize + 4]byte*/ coinharness.Seed {
 	seed := [chainhash.HashSize + 4]byte{}
 	copy(seed[:], hdSeed[:])
 	binary.BigEndian.PutUint32(seed[:chainhash.HashSize], salt)
-	return seed
+	return seed[:]
 }
