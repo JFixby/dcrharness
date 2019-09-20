@@ -7,7 +7,6 @@ package memwallet
 
 import (
 	"github.com/decred/dcrd/chaincfg"
-	"github.com/decred/dcrd/chaincfg/chainhash"
 	"github.com/decred/dcrd/dcrutil"
 	"github.com/decred/dcrd/hdkeychain"
 	"github.com/decred/dcrd/wire"
@@ -23,13 +22,13 @@ type WalletFactory struct {
 // NewWallet creates and returns a fully initialized instance of the InMemoryWallet.
 func (f *WalletFactory) NewWallet(cfg *coinharness.TestWalletConfig) coinharness.Wallet {
 	pin.AssertNotNil("ActiveNet", cfg.ActiveNet)
-	w, e := newMemWallet(cfg.ActiveNet, cfg.Seed.([chainhash.HashSize + 4]byte))
+	w, e := newMemWallet(cfg.ActiveNet, cfg.Seed)
 	pin.CheckTestSetupMalfunction(e)
 	return w
 }
 
-func newMemWallet(net coinharness.Network, harnessHDSeed [chainhash.HashSize + 4]byte) (*InMemoryWallet, error) {
-	hdRoot, err := hdkeychain.NewMaster(harnessHDSeed[:], net.Params().(*chaincfg.Params))
+func newMemWallet(net coinharness.Network, harnessHDSeed coinharness.Seed) (*InMemoryWallet, error) {
+	hdRoot, err := hdkeychain.NewMaster(harnessHDSeed.([]byte)[:], net.Params().(*chaincfg.Params))
 	if err != nil {
 		return nil, nil
 	}
