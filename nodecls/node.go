@@ -17,8 +17,8 @@ import (
 type ConsoleNodeFactory struct {
 	// NodeExecutablePathProvider returns path to the dcrd executable
 	NodeExecutablePathProvider commandline.ExecutablePathProvider
-	ConsoleCommandCook         DcrdConsoleCommandCook
-	RPCClientFactory           dcrharness.DcrRPCClientFactory
+	ConsoleCommandCook         ConsoleCommandCook
+	RPCClientFactory           dcrharness.RPCClientFactory
 }
 
 // NewNode creates and returns a fully initialized instance of the ConsoleNode.
@@ -46,11 +46,11 @@ func (factory *ConsoleNodeFactory) NewNode(config *coinharness.TestNodeConfig) c
 	return consolenode.NewConsoleNode(args)
 }
 
-type DcrdConsoleCommandCook struct {
+type ConsoleCommandCook struct {
 }
 
 // cookArguments prepares arguments for the command-line call
-func (cook *DcrdConsoleCommandCook) CookArguments(par *consolenode.ConsoleCommandParams) map[string]interface{} {
+func (cook *ConsoleCommandCook) CookArguments(par *consolenode.ConsoleCommandParams) map[string]interface{} {
 	result := make(map[string]interface{})
 
 	result["txindex"] = commandline.NoArgumentValue

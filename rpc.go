@@ -11,10 +11,10 @@ import (
 	"io/ioutil"
 )
 
-type DcrRPCClientFactory struct {
+type RPCClientFactory struct {
 }
 
-func (f *DcrRPCClientFactory) NewRPCConnection(config coinharness.RPCConnectionConfig, handlers coinharness.RPCClientNotificationHandlers) (coinharness.RPCClient, error) {
+func (f *RPCClientFactory) NewRPCConnection(config coinharness.RPCConnectionConfig, handlers coinharness.RPCClientNotificationHandlers) (coinharness.RPCClient, error) {
 	var h *rpcclient.NotificationHandlers
 	if handlers != nil {
 		h = handlers.(*rpcclient.NotificationHandlers)
@@ -38,31 +38,31 @@ func (f *DcrRPCClientFactory) NewRPCConnection(config coinharness.RPCConnectionC
 	return NewRPCClient(cfg, h)
 }
 
-type DCRPCClient struct {
+type RPCClient struct {
 	rpc *rpcclient.Client
 }
 
-func (c *DCRPCClient) AddNode(args *coinharness.AddNodeArguments) error {
+func (c *RPCClient) AddNode(args *coinharness.AddNodeArguments) error {
 	return c.rpc.AddNode(args.TargetAddr, args.Command.(rpcclient.AddNodeCommand))
 }
 
-func (c *DCRPCClient) Disconnect() {
+func (c *RPCClient) Disconnect() {
 	c.rpc.Disconnect()
 }
 
-func (c *DCRPCClient) Shutdown() {
+func (c *RPCClient) Shutdown() {
 	c.rpc.Shutdown()
 }
 
-func (c *DCRPCClient) NotifyBlocks() error {
+func (c *RPCClient) NotifyBlocks() error {
 	return c.rpc.NotifyBlocks()
 }
 
-func (c *DCRPCClient) GetBlockCount() (int64, error) {
+func (c *RPCClient) GetBlockCount() (int64, error) {
 	return c.rpc.GetBlockCount()
 }
 
-func (c *DCRPCClient) Generate(blocks uint32) (result []coinharness.Hash, e error) {
+func (c *RPCClient) Generate(blocks uint32) (result []coinharness.Hash, e error) {
 	list, e := c.rpc.Generate(blocks)
 	if e != nil {
 		return nil, e
@@ -73,11 +73,11 @@ func (c *DCRPCClient) Generate(blocks uint32) (result []coinharness.Hash, e erro
 	return result, nil
 }
 
-func (c *DCRPCClient) Internal() interface{} {
+func (c *RPCClient) Internal() interface{} {
 	return c.rpc
 }
 
-func (c *DCRPCClient) GetRawMempool(command interface{}) (result []coinharness.Hash, e error) {
+func (c *RPCClient) GetRawMempool(command interface{}) (result []coinharness.Hash, e error) {
 	list, e := c.rpc.GetRawMempool(command.(dcrjson.GetRawMempoolTxTypeCmd))
 	if e != nil {
 		return nil, e
@@ -88,13 +88,13 @@ func (c *DCRPCClient) GetRawMempool(command interface{}) (result []coinharness.H
 	return result, nil
 }
 
-func (c *DCRPCClient) SendRawTransaction(tx coinharness.CreatedTransactionTx, allowHighFees bool) (result coinharness.Hash, e error) {
+func (c *RPCClient) SendRawTransaction(tx coinharness.CreatedTransactionTx, allowHighFees bool) (result coinharness.Hash, e error) {
 	txx := TransactionTxToRaw(tx)
 	r, e := c.rpc.SendRawTransaction(txx, allowHighFees)
 	return r, e
 }
 
-func (c *DCRPCClient) GetPeerInfo() ([]coinharness.PeerInfo, error) {
+func (c *RPCClient) GetPeerInfo() ([]coinharness.PeerInfo, error) {
 	pif, err := c.rpc.GetPeerInfo()
 	if err != nil {
 		return nil, err
@@ -116,21 +116,21 @@ func NewRPCClient(config *rpcclient.ConnConfig, handlers *rpcclient.Notification
 		return nil, err
 	}
 
-	result := &DCRPCClient{rpc: legacy}
+	result := &RPCClient{rpc: legacy}
 	return result, nil
 }
 
-func (c *DCRPCClient) GetNewAddress(account string) (coinharness.Address, error) {
+func (c *RPCClient) GetNewAddress(account string) (coinharness.Address, error) {
 	legacy, err := c.rpc.GetNewAddress(account)
 	if err != nil {
 		return nil, err
 	}
 
-	result := &DCRAddress{Address: legacy}
+	result := &Address{Address: legacy}
 	return result, nil
 }
 
-func (c *DCRPCClient) ValidateAddress(address coinharness.Address) (*coinharness.ValidateAddressResult, error) {
+func (c *RPCClient) ValidateAddress(address coinharness.Address) (*coinharness.ValidateAddressResult, error) {
 	legacy, err := c.rpc.ValidateAddress(address.Internal().(dcrutil.Address))
 	// *dcrjson.ValidateAddressWalletResult
 	if err != nil {
@@ -146,7 +146,7 @@ func (c *DCRPCClient) ValidateAddress(address coinharness.Address) (*coinharness
 	return result, nil
 }
 
-func (c *DCRPCClient) GetBalance(account string) (*coinharness.GetBalanceResult, error) {
+func (c *RPCClient) GetBalance(account string) (*coinharness.GetBalanceResult, error) {
 	legacy, err := c.rpc.GetBalance(account)
 	// *dcrjson.ValidateAddressWalletResult
 	if err != nil {
@@ -159,19 +159,19 @@ func (c *DCRPCClient) GetBalance(account string) (*coinharness.GetBalanceResult,
 	return result, nil
 }
 
-func (c *DCRPCClient) GetBestBlock() (coinharness.Hash, int64, error) {
+func (c *RPCClient) GetBestBlock() (coinharness.Hash, int64, error) {
 	return c.rpc.GetBestBlock()
 }
 
-func (c *DCRPCClient) CreateNewAccount(account string) error {
+func (c *RPCClient) CreateNewAccount(account string) error {
 	return c.rpc.CreateNewAccount(account)
 }
 
-func (c *DCRPCClient) WalletLock() error {
+func (c *RPCClient) WalletLock() error {
 	return c.rpc.WalletLock()
 }
 
-func (c *DCRPCClient) WalletInfo() (*coinharness.WalletInfoResult, error) {
+func (c *RPCClient) WalletInfo() (*coinharness.WalletInfoResult, error) {
 	r, err := c.rpc.WalletInfo()
 	if err != nil {
 		return nil, err
@@ -184,15 +184,15 @@ func (c *DCRPCClient) WalletInfo() (*coinharness.WalletInfoResult, error) {
 	return result, nil
 }
 
-func (c *DCRPCClient) WalletUnlock(passphrase string, timeoutSecs int64) error {
+func (c *RPCClient) WalletUnlock(passphrase string, timeoutSecs int64) error {
 	return c.rpc.WalletPassphrase(passphrase, timeoutSecs)
 }
 
-func (c *DCRPCClient) CreateTransaction(*coinharness.CreateTransactionArgs) (coinharness.CreatedTransactionTx, error) {
+func (c *RPCClient) CreateTransaction(*coinharness.CreateTransactionArgs) (coinharness.CreatedTransactionTx, error) {
 	panic("")
 }
 
-func (c *DCRPCClient) GetBuildVersion() (coinharness.BuildVersion, error) {
+func (c *RPCClient) GetBuildVersion() (coinharness.BuildVersion, error) {
 	//legacy, err := c.rpc.GetBuildVersion()
 	//if err != nil {
 	//	return nil, err
@@ -201,18 +201,18 @@ func (c *DCRPCClient) GetBuildVersion() (coinharness.BuildVersion, error) {
 	return nil, fmt.Errorf("decred does not support this feature (GetBuildVersion)")
 }
 
-type DCRAddress struct {
+type Address struct {
 	Address dcrutil.Address
 }
 
-func (c *DCRAddress) String() string {
+func (c *Address) String() string {
 	return c.Address.String()
 }
 
-func (c *DCRAddress) Internal() interface{} {
+func (c *Address) Internal() interface{} {
 	return c.Address
 }
 
-func (c *DCRAddress) IsForNet(net coinharness.Network) bool {
+func (c *Address) IsForNet(net coinharness.Network) bool {
 	return c.Address.IsForNet(net.(*chaincfg.Params))
 }

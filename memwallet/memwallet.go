@@ -104,8 +104,6 @@ func (wallet *InMemoryWallet) Start(args *coinharness.TestWalletStartArgs) error
 		handlers.OnBlockDisconnected = wallet.UnwindBlock
 	}
 
-	//handlers.OnClientConnected = wallet.onDcrdConnect
-
 	wallet.nodeRPC = coinharness.NewRPCConnection(wallet.RPCClientFactory, args.NodeRPCConfig, 5, handlers)
 	pin.AssertNotNil("nodeRPC", wallet.nodeRPC)
 
@@ -403,7 +401,7 @@ func (wallet *InMemoryWallet) NewAddress(_ *coinharness.NewAddressArgs) (coinhar
 		return nil, err
 	}
 
-	return &dcrharness.DCRAddress{Address: add}, nil
+	return &dcrharness.Address{Address: add}, nil
 }
 
 // fundTx attempts to fund a transaction sending amt coins.  The coins are

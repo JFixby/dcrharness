@@ -54,7 +54,7 @@ func newMemWallet(net *chaincfg.Params, harnessHDSeed [chainhash.HashSize + 4]by
 	addrs := make(map[uint32]dcrutil.Address)
 	addrs[0] = coinbaseAddr
 
-	clientFac := &dcrharness.DcrRPCClientFactory{}
+	clientFac := &dcrharness.RPCClientFactory{}
 
 	return &InMemoryWallet{
 		net:               net,
