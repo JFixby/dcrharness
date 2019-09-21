@@ -43,6 +43,24 @@ type RPCClient struct {
 	rpc *rpcclient.Client
 }
 
+func (c *RPCClient) ListUnspent() ([]*coinharness.Unspent, error) {
+	result, err := c.rpc.ListUnspent()
+	if err != nil {
+		return nil, err
+	}
+	var r []*coinharness.Unspent
+	for _, e := range result {
+		x := &coinharness.Unspent{}
+		x.Address = e.Address
+		x.Spendable = e.Spendable
+		x.TxType = e.TxType
+		x.TxID = e.TxID
+		x.Confirmations = e.Confirmations
+		r = append(r, x)
+	}
+	return r, nil
+}
+
 func (c *RPCClient) AddNode(args *coinharness.AddNodeArguments) error {
 	return c.rpc.AddNode(args.TargetAddr, args.Command.(rpcclient.AddNodeCommand))
 }
@@ -203,10 +221,6 @@ func (c *RPCClient) WalletInfo() (*coinharness.WalletInfoResult, error) {
 
 func (c *RPCClient) WalletUnlock(passphrase string, timeoutSecs int64) error {
 	return c.rpc.WalletPassphrase(passphrase, timeoutSecs)
-}
-
-func (c *RPCClient) CreateTransaction(*coinharness.CreateTransactionArgs) (coinharness.CreatedTransactionTx, error) {
-	panic("")
 }
 
 func (c *RPCClient) GetBuildVersion() (coinharness.BuildVersion, error) {

@@ -4,7 +4,6 @@ import (
 	"github.com/decred/dcrd/chaincfg"
 	"github.com/decred/dcrd/dcrec/secp256k1"
 	"github.com/decred/dcrd/dcrutil"
-	"github.com/decred/dcrd/wire"
 	"github.com/jfixby/coinharness"
 )
 
@@ -23,8 +22,8 @@ type chainUpdate struct {
 // created for each new block received, then stored in a log in order to
 // properly handle block re-orgs.
 type undoEntry struct {
-	utxosDestroyed map[wire.OutPoint]*utxo
-	utxosCreated   []wire.OutPoint
+	utxosDestroyed map[coinharness.OutPoint]*utxo
+	utxosCreated   []coinharness.OutPoint
 }
 
 // utxo represents an unspent output spendable by the InMemoryWallet. The maturity

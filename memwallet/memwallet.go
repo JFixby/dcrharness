@@ -2,7 +2,6 @@ package memwallet
 
 import (
 	"bytes"
-	"fmt"
 	"github.com/jfixby/coinharness"
 	"github.com/jfixby/dcrharness"
 	"github.com/jfixby/pin"
@@ -15,7 +14,6 @@ import (
 	"github.com/decred/dcrd/dcrutil"
 	"github.com/decred/dcrd/hdkeychain"
 	"github.com/decred/dcrd/rpcclient"
-	"github.com/decred/dcrd/txscript"
 	"github.com/decred/dcrd/wire"
 )
 
@@ -42,7 +40,7 @@ type InMemoryWallet struct {
 	addrs map[uint32]dcrutil.Address
 
 	// utxos is the set of utxos spendable by the wallet.
-	utxos map[wire.OutPoint]*utxo
+	utxos map[coinharness.OutPoint]*utxo
 
 	// reorgJournal is a map storing an undo entry for each new block
 	// received. Once a block is disconnected, the undo entry for the
@@ -200,7 +198,7 @@ func (wallet *InMemoryWallet) ingestBlock(update *chainUpdate) {
 	// the wallet as a result.
 	wallet.currentHeight = update.blockHeight
 	undo := &undoEntry{
-		utxosDestroyed: make(map[wire.OutPoint]*utxo),
+		utxosDestroyed: make(map[coinharness.OutPoint]*utxo),
 	}
 	for _, tx := range update.filteredTxns {
 		mtx := tx.MsgTx()
@@ -241,7 +239,7 @@ func (wallet *InMemoryWallet) chainSyncer() {
 		wallet.Lock()
 		wallet.currentHeight = update.blockHeight
 		undo := &undoEntry{
-			utxosDestroyed: make(map[wire.OutPoint]*utxo),
+			utxosDestroyed: make(map[coinharness.OutPoint]*utxo),
 		}
 		for _, tx := range update.filteredTxns {
 			mtx := tx.MsgTx()
@@ -281,7 +279,7 @@ func (wallet *InMemoryWallet) evalOutputs(outputs []*wire.TxOut, txHash *chainha
 				maturityHeight = wallet.currentHeight + int64(wallet.net.CoinbaseMaturity())
 			}
 
-			op := wire.OutPoint{Hash: *txHash, Index: uint32(i)}
+			op := coinharness.OutPoint{Hash: *txHash, Index: uint32(i)}
 			wallet.utxos[op] = &utxo{
 				value:          dcrutil.Amount(output.Value),
 				keyIndex:       keyIndex,
@@ -398,74 +396,74 @@ func (wallet *InMemoryWallet) NewAddress(_ *coinharness.NewAddressArgs) (coinhar
 	return &dcrharness.Address{Address: add}, nil
 }
 
-// fundTx attempts to fund a transaction sending amt coins.  The coins are
-// selected such that the final amount spent pays enough fees as dictated by
-// the passed fee rate.  The passed fee rate should be expressed in
-// atoms-per-byte.
+//// fundTx attempts to fund a transaction sending amt coins.  The coins are
+//// selected such that the final amount spent pays enough fees as dictated by
+//// the passed fee rate.  The passed fee rate should be expressed in
+//// atoms-per-byte.
+////
+//// NOTE: The InMemoryWallet's mutex must be held when this function is called.
+//func (wallet *InMemoryWallet) fundTx(tx *wire.MsgTx, amt dcrutil.Amount, feeRate dcrutil.Amount) error {
+//	const (
+//		// spendSize is the largest number of bytes of a sigScript
+//		// which spends a p2pkh output: OP_DATA_73 <sig> OP_DATA_33 <pubkey>
+//		spendSize = 1 + 73 + 1 + 33
+//	)
 //
-// NOTE: The InMemoryWallet's mutex must be held when this function is called.
-func (wallet *InMemoryWallet) fundTx(tx *wire.MsgTx, amt dcrutil.Amount, feeRate dcrutil.Amount) error {
-	const (
-		// spendSize is the largest number of bytes of a sigScript
-		// which spends a p2pkh output: OP_DATA_73 <sig> OP_DATA_33 <pubkey>
-		spendSize = 1 + 73 + 1 + 33
-	)
-
-	var (
-		amtSelected dcrutil.Amount
-		txSize      int
-	)
-
-	for outPoint, utxo := range wallet.utxos {
-		// Skip any outputs that are still currently immature or are
-		// currently locked.
-		if !utxo.isMature(wallet.currentHeight) || utxo.isLocked {
-			continue
-		}
-
-		amtSelected += utxo.value
-
-		// Add the selected output to the transaction, updating the
-		// current tx size while accounting for the size of the future
-		// sigScript.
-		tx.AddTxIn(wire.NewTxIn(&outPoint, int64(utxo.value), nil))
-		txSize = tx.SerializeSize() + spendSize*len(tx.TxIn)
-
-		// Calculate the fee required for the txn at this point
-		// observing the specified fee rate. If we don't have enough
-		// coins from he current amount selected to pay the fee, then
-		// continue to grab more coins.
-		reqFee := dcrutil.Amount(txSize * int(feeRate))
-		if amtSelected-reqFee < amt {
-			continue
-		}
-
-		// If we have any change left over, then add an additional
-		// output to the transaction reserved for change.
-		changeVal := amtSelected - amt - reqFee
-		if changeVal > 0 {
-			addr, err := wallet.newAddress()
-			if err != nil {
-				return err
-			}
-			pkScript, err := txscript.PayToAddrScript(addr)
-			if err != nil {
-				return err
-			}
-			changeOutput := &wire.TxOut{
-				Value:    int64(changeVal),
-				PkScript: pkScript,
-			}
-			tx.AddTxOut(changeOutput)
-		}
-
-		return nil
-	}
-
-	// If we've reached this point, then coin selection failed due to an
-	// insufficient amount of coins.
-	return fmt.Errorf("not enough funds for coin selection")
-}
+//	var (
+//		amtSelected dcrutil.Amount
+//		txSize      int
+//	)
+//
+//	for outPoint, utxo := range wallet.utxos {
+//		// Skip any outputs that are still currently immature or are
+//		// currently locked.
+//		if !utxo.isMature(wallet.currentHeight) || utxo.isLocked {
+//			continue
+//		}
+//
+//		amtSelected += utxo.value
+//
+//		// Add the selected output to the transaction, updating the
+//		// current tx size while accounting for the size of the future
+//		// sigScript.
+//		tx.AddTxIn(wire.NewTxIn(&outPoint, int64(utxo.value), nil))
+//		txSize = tx.SerializeSize() + spendSize*len(tx.TxIn)
+//
+//		// Calculate the fee required for the txn at this point
+//		// observing the specified fee rate. If we don't have enough
+//		// coins from he current amount selected to pay the fee, then
+//		// continue to grab more coins.
+//		reqFee := dcrutil.Amount(txSize * int(feeRate))
+//		if amtSelected-reqFee < amt {
+//			continue
+//		}
+//
+//		// If we have any change left over, then add an additional
+//		// output to the transaction reserved for change.
+//		changeVal := amtSelected - amt - reqFee
+//		if changeVal > 0 {
+//			addr, err := wallet.newAddress()
+//			if err != nil {
+//				return err
+//			}
+//			pkScript, err := txscript.PayToAddrScript(addr)
+//			if err != nil {
+//				return err
+//			}
+//			changeOutput := &wire.TxOut{
+//				Value:    int64(changeVal),
+//				PkScript: pkScript,
+//			}
+//			tx.AddTxOut(changeOutput)
+//		}
+//
+//		return nil
+//	}
+//
+//	// If we've reached this point, then coin selection failed due to an
+//	// insufficient amount of coins.
+//	return fmt.Errorf("not enough funds for coin selection")
+//}
 
 // SendOutputs creates, then sends a transaction paying to the specified output
 // while observing the passed fee rate. The passed fee rate should be expressed
@@ -475,7 +473,7 @@ func (wallet *InMemoryWallet) SendOutputs(args *coinharness.SendOutputsArgs) (co
 		Outputs: args.Outputs,
 		FeeRate: args.FeeRate,
 	}
-	tx, err := wallet.CreateTransaction(arg2)
+	tx, err := coinharness.CreateTransaction(wallet, arg2)
 	if err != nil {
 		return nil, err
 	}
@@ -501,7 +499,7 @@ func (wallet *InMemoryWallet) SendOutputsWithoutChange(outputs []*wire.TxOut,
 		FeeRate: feeRate,
 		Change:  false,
 	}
-	tx, err := wallet.CreateTransaction(args)
+	tx, err := coinharness.CreateTransaction(wallet,args)
 	if err != nil {
 		return nil, err
 	}
@@ -510,70 +508,70 @@ func (wallet *InMemoryWallet) SendOutputsWithoutChange(outputs []*wire.TxOut,
 	return r.(*chainhash.Hash), x
 }
 
-// CreateTransaction returns a fully signed transaction paying to the specified
-// outputs while observing the desired fee rate. The passed fee rate should be
-// expressed in satoshis-per-byte. The transaction being created can optionally
-// include a change output indicated by the change boolean.
+//// CreateTransaction returns a fully signed transaction paying to the specified
+//// outputs while observing the desired fee rate. The passed fee rate should be
+//// expressed in satoshis-per-byte. The transaction being created can optionally
+//// include a change output indicated by the change boolean.
+////
+//// This function is safe for concurrent access.
+//func (wallet *InMemoryWallet) CreateTransaction(args *coinharness.CreateTransactionArgs) (coinharness.CreatedTransactionTx, error) {
 //
-// This function is safe for concurrent access.
-func (wallet *InMemoryWallet) CreateTransaction(args *coinharness.CreateTransactionArgs) (coinharness.CreatedTransactionTx, error) {
-
-	wallet.Lock()
-	defer wallet.Unlock()
-
-	tx := wire.NewMsgTx()
-
-	// Tally up the total amount to be sent in order to perform coin
-	// selection shortly below.
-	var outputAmt dcrutil.Amount
-	for _, output := range args.Outputs {
-		outputAmt += dcrutil.Amount(output.Value())
-		tx.AddTxOut(output.(*dcrharness.OutputTx).Parent)
-	}
-
-	// Attempt to fund the transaction with spendable utxos.
-	if err := wallet.fundTx(tx, outputAmt, dcrutil.Amount(args.FeeRate.(int))); err != nil {
-		return nil, err
-	}
-
-	// Populate all the selected inputs with valid sigScript for spending.
-	// Along the way record all outputs being spent in order to avoid a
-	// potential double spend.
-	spentOutputs := make([]*utxo, 0, len(tx.TxIn))
-	for i, txIn := range tx.TxIn {
-		outPoint := txIn.PreviousOutPoint
-		utxo := wallet.utxos[outPoint]
-
-		extendedKey, err := wallet.hdRoot.Child(utxo.keyIndex)
-		if err != nil {
-			return nil, err
-		}
-
-		privKey, err := extendedKey.ECPrivKey()
-		if err != nil {
-			return nil, err
-		}
-
-		sigScript, err := txscript.SignatureScript(tx, i, utxo.pkScript,
-			txscript.SigHashAll, privKey, true)
-		if err != nil {
-			return nil, err
-		}
-
-		txIn.SignatureScript = sigScript
-
-		spentOutputs = append(spentOutputs, utxo)
-	}
-
-	// As these outputs are now being spent by this newly created
-	// transaction, mark the outputs are "locked". This action ensures
-	// these outputs won't be double spent by any subsequent transactions.
-	// These locked outputs can be freed via a call to UnlockOutputs.
-	for _, utxo := range spentOutputs {
-		utxo.isLocked = true
-	}
-	return &dcrharness.CreatedTransactionTx{tx}, nil
-}
+//	wallet.Lock()
+//	defer wallet.Unlock()
+//
+//	tx := wire.NewMsgTx()
+//
+//	// Tally up the total amount to be sent in order to perform coin
+//	// selection shortly below.
+//	var outputAmt dcrutil.Amount
+//	for _, output := range args.Outputs {
+//		outputAmt += dcrutil.Amount(output.Value())
+//		tx.AddTxOut(output.(*dcrharness.OutputTx).Parent)
+//	}
+//
+//	// Attempt to fund the transaction with spendable utxos.
+//	if err := wallet.fundTx(tx, outputAmt, dcrutil.Amount(args.FeeRate.(int))); err != nil {
+//		return nil, err
+//	}
+//
+//	// Populate all the selected inputs with valid sigScript for spending.
+//	// Along the way record all outputs being spent in order to avoid a
+//	// potential double spend.
+//	spentOutputs := make([]*utxo, 0, len(tx.TxIn))
+//	for i, txIn := range tx.TxIn {
+//		outPoint := txIn.PreviousOutPoint
+//		utxo := wallet.utxos[outPoint]
+//
+//		extendedKey, err := wallet.hdRoot.Child(utxo.keyIndex)
+//		if err != nil {
+//			return nil, err
+//		}
+//
+//		privKey, err := extendedKey.ECPrivKey()
+//		if err != nil {
+//			return nil, err
+//		}
+//
+//		sigScript, err := txscript.SignatureScript(tx, i, utxo.pkScript,
+//			txscript.SigHashAll, privKey, true)
+//		if err != nil {
+//			return nil, err
+//		}
+//
+//		txIn.SignatureScript = sigScript
+//
+//		spentOutputs = append(spentOutputs, utxo)
+//	}
+//
+//	// As these outputs are now being spent by this newly created
+//	// transaction, mark the outputs are "locked". This action ensures
+//	// these outputs won't be double spent by any subsequent transactions.
+//	// These locked outputs can be freed via a call to UnlockOutputs.
+//	for _, utxo := range spentOutputs {
+//		utxo.isLocked = true
+//	}
+//	return &dcrharness.CreatedTransactionTx{tx}, nil
+//}
 
 // UnlockOutputs unlocks any outputs which were previously locked due to
 // being selected to fund a transaction via the CreateTransaction method.
@@ -584,7 +582,7 @@ func (wallet *InMemoryWallet) UnlockOutputs(inputs []coinharness.InputTx) error 
 	defer wallet.Unlock()
 
 	for _, input := range inputs {
-		utxo, ok := wallet.utxos[input.PreviousOutPoint().(wire.OutPoint)]
+		utxo, ok := wallet.utxos[input.PreviousOutPoint]
 		if !ok {
 			continue
 		}
