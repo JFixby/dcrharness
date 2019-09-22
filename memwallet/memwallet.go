@@ -167,7 +167,7 @@ func (m *InMemoryWallet) IngestBlock(header []byte, filteredTxns [][]byte) {
 	}
 	height := int64(hdr.Height)
 
-	txns := make([]*dcrutil.Tx, 0, len(filteredTxns))
+	txns := make([]*coinharness.Tx, 0, len(filteredTxns))
 	for _, txBytes := range filteredTxns {
 		tx, err := dcrutil.NewTxFromBytes(txBytes)
 		if err != nil {
@@ -190,29 +190,29 @@ func (m *InMemoryWallet) IngestBlock(header []byte, filteredTxns [][]byte) {
 	}()
 }
 
-// ingestBlock updates the wallet's internal utxo state based on the outputs
-// created and destroyed within each block.
-func (wallet *InMemoryWallet) ingestBlock(update *chainUpdate) {
-	// Update the latest synced height, then process each filtered
-	// transaction in the block creating and destroying utxos within
-	// the wallet as a result.
-	wallet.currentHeight = update.blockHeight
-	undo := &undoEntry{
-		utxosDestroyed: make(map[coinharness.OutPoint]*utxo),
-	}
-	for _, tx := range update.filteredTxns {
-		mtx := tx.MsgTx()
-		isCoinbase := blockchain.IsCoinBaseTx(mtx)
-		txHash := mtx.TxHash()
-		wallet.evalOutputs(mtx.TxOut, &txHash, isCoinbase, undo)
-		wallet.evalInputs(mtx.TxIn, undo)
-	}
-
-	// Finally, record the undo entry for this block so we can
-	// properly update our internal state in response to the block
-	// being re-org'd from the main chain.
-	wallet.reorgJournal[update.blockHeight] = undo
-}
+//// ingestBlock updates the wallet's internal utxo state based on the outputs
+//// created and destroyed within each block.
+//func (wallet *InMemoryWallet) ingestBlock(update *chainUpdate) {
+//	// Update the latest synced height, then process each filtered
+//	// transaction in the block creating and destroying utxos within
+//	// the wallet as a result.
+//	wallet.currentHeight = update.blockHeight
+//	undo := &undoEntry{
+//		utxosDestroyed: make(map[coinharness.OutPoint]*utxo),
+//	}
+//	for _, tx := range update.filteredTxns {
+//		mtx := tx.MsgTx()
+//		isCoinbase := blockchain.IsCoinBaseTx(mtx)
+//		txHash := mtx.TxHash()
+//		wallet.evalOutputs(mtx.TxOut, &txHash, isCoinbase, undo)
+//		wallet.evalInputs(mtx.TxIn, undo)
+//	}
+//
+//	// Finally, record the undo entry for this block so we can
+//	// properly update our internal state in response to the block
+//	// being re-org'd from the main chain.
+//	wallet.reorgJournal[update.blockHeight] = undo
+//}
 
 // chainSyncer is a goroutine dedicated to processing new blocks in order to
 // keep the wallet's utxo state up to date.
@@ -242,10 +242,10 @@ func (wallet *InMemoryWallet) chainSyncer() {
 			utxosDestroyed: make(map[coinharness.OutPoint]*utxo),
 		}
 		for _, tx := range update.filteredTxns {
-			mtx := tx.MsgTx()
+			mtx := tx.MsgTx
 			isCoinbase := blockchain.IsCoinBaseTx(mtx)
-			txHash := mtx.TxHash()
-			wallet.evalOutputs(mtx.TxOut, &txHash, isCoinbase, undo)
+			txHash := mtx.TxHash
+			wallet.evalOutputs(mtx.TxOut, txHash, isCoinbase, undo)
 			wallet.evalInputs(mtx.TxIn, undo)
 		}
 
@@ -259,7 +259,7 @@ func (wallet *InMemoryWallet) chainSyncer() {
 
 // evalOutputs evaluates each of the passed outputs, creating a new matching
 // utxo within the wallet if we're able to spend the output.
-func (wallet *InMemoryWallet) evalOutputs(outputs []*wire.TxOut, txHash *chainhash.Hash, isCoinbase bool, undo *undoEntry) {
+func (wallet *InMemoryWallet) evalOutputs(outputs []*coinharness.TxOut, txHash coinharness.Hash, isCoinbase bool, undo *undoEntry) {
 	for i, output := range outputs {
 		pkScript := output.PkScript
 
@@ -279,9 +279,9 @@ func (wallet *InMemoryWallet) evalOutputs(outputs []*wire.TxOut, txHash *chainha
 				maturityHeight = wallet.currentHeight + int64(wallet.net.CoinbaseMaturity())
 			}
 
-			op := coinharness.OutPoint{Hash: *txHash, Index: uint32(i)}
+			op := coinharness.OutPoint{Hash: txHash, Index: uint32(i)}
 			wallet.utxos[op] = &utxo{
-				value:          dcrutil.Amount(output.Value),
+				value:          output.Amount.Copy(),
 				keyIndex:       keyIndex,
 				maturityHeight: maturityHeight,
 				pkScript:       pkScript,
@@ -293,7 +293,7 @@ func (wallet *InMemoryWallet) evalOutputs(outputs []*wire.TxOut, txHash *chainha
 
 // evalInputs scans all the passed inputs, destroying any utxos within the
 // wallet which are spent by an input.
-func (wallet *InMemoryWallet) evalInputs(inputs []*wire.TxIn, undo *undoEntry) {
+func (wallet *InMemoryWallet) evalInputs(inputs []*coinharness.InputTx, undo *undoEntry) {
 	for _, txIn := range inputs {
 		op := txIn.PreviousOutPoint
 		oldUtxo, ok := wallet.utxos[op]
@@ -488,7 +488,7 @@ func (wallet *InMemoryWallet) SendOutputsWithoutChange(outputs []*wire.TxOut,
 	feeRate dcrutil.Amount) (*chainhash.Hash, error) {
 
 	//cast list
-	b := make([]coinharness.OutputTx, len(outputs))
+	b := make([]coinharness.TxOut, len(outputs))
 	{
 		for i := range outputs {
 			b[i] = &dcrharness.OutputTx{outputs[i]}
@@ -499,7 +499,7 @@ func (wallet *InMemoryWallet) SendOutputsWithoutChange(outputs []*wire.TxOut,
 		FeeRate: feeRate,
 		Change:  false,
 	}
-	tx, err := coinharness.CreateTransaction(wallet,args)
+	tx, err := coinharness.CreateTransaction(wallet, args)
 	if err != nil {
 		return nil, err
 	}
@@ -514,7 +514,7 @@ func (wallet *InMemoryWallet) SendOutputsWithoutChange(outputs []*wire.TxOut,
 //// include a change output indicated by the change boolean.
 ////
 //// This function is safe for concurrent access.
-//func (wallet *InMemoryWallet) CreateTransaction(args *coinharness.CreateTransactionArgs) (coinharness.CreatedTransactionTx, error) {
+//func (wallet *InMemoryWallet) CreateTransaction(args *coinharness.CreateTransactionArgs) (coinharness.MessageTx, error) {
 //
 //	wallet.Lock()
 //	defer wallet.Unlock()
@@ -526,7 +526,7 @@ func (wallet *InMemoryWallet) SendOutputsWithoutChange(outputs []*wire.TxOut,
 //	var outputAmt dcrutil.Amount
 //	for _, output := range args.Outputs {
 //		outputAmt += dcrutil.Amount(output.Value())
-//		tx.AddTxOut(output.(*dcrharness.OutputTx).Parent)
+//		tx.AddTxOut(output.(*dcrharness.TxOut).Parent)
 //	}
 //
 //	// Attempt to fund the transaction with spendable utxos.
@@ -570,7 +570,7 @@ func (wallet *InMemoryWallet) SendOutputsWithoutChange(outputs []*wire.TxOut,
 //	for _, utxo := range spentOutputs {
 //		utxo.isLocked = true
 //	}
-//	return &dcrharness.CreatedTransactionTx{tx}, nil
+//	return &dcrharness.MessageTx{tx}, nil
 //}
 
 // UnlockOutputs unlocks any outputs which were previously locked due to
@@ -600,7 +600,7 @@ func (wallet *InMemoryWallet) GetBalance(account string) (*coinharness.GetBalanc
 	wallet.RLock()
 	defer wallet.RUnlock()
 	result := &coinharness.GetBalanceResult{}
-	var balance dcrutil.Amount
+	balance := coinharness.CoinsAmount{0}
 	for _, utxo := range wallet.utxos {
 		// Prevent any immature or locked outputs from contributing to
 		// the wallet's total confirmed balance.
@@ -608,7 +608,7 @@ func (wallet *InMemoryWallet) GetBalance(account string) (*coinharness.GetBalanc
 			continue
 		}
 
-		balance += utxo.value
+		balance.AtomsValue += utxo.value.AtomsValue
 	}
 
 	result.TotalSpendable = balance
