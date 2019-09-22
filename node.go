@@ -1,9 +1,7 @@
-package nodecls
+package dcrharness
 
 import (
 	"github.com/jfixby/coinharness"
-	"github.com/jfixby/coinharness/consolenode"
-	"github.com/jfixby/dcrharness"
 	"github.com/jfixby/pin"
 	"github.com/jfixby/pin/commandline"
 )
@@ -13,7 +11,7 @@ type ConsoleNodeFactory struct {
 	// NodeExecutablePathProvider returns path to the dcrd executable
 	NodeExecutablePathProvider commandline.ExecutablePathProvider
 	ConsoleCommandCook         ConsoleCommandCook
-	RPCClientFactory           dcrharness.RPCClientFactory
+	RPCClientFactory           RPCClientFactory
 }
 
 // NewNode creates and returns a fully initialized instance of the ConsoleNode.
@@ -24,7 +22,7 @@ func (factory *ConsoleNodeFactory) NewNode(config *coinharness.TestNodeConfig) c
 	pin.AssertNotEmpty("NodeUser", config.NodeUser)
 	pin.AssertNotEmpty("NodePassword", config.NodePassword)
 
-	args := &consolenode.NewConsoleNodeArgs{
+	args := &coinharness.NewConsoleNodeArgs{
 		ClientFac:                  &factory.RPCClientFactory,
 		ConsoleCommandCook:         &factory.ConsoleCommandCook,
 		NodeExecutablePathProvider: factory.NodeExecutablePathProvider,
@@ -38,14 +36,14 @@ func (factory *ConsoleNodeFactory) NewNode(config *coinharness.TestNodeConfig) c
 		ActiveNet:                  config.ActiveNet,
 	}
 
-	return consolenode.NewConsoleNode(args)
+	return coinharness.NewConsoleNode(args)
 }
 
 type ConsoleCommandCook struct {
 }
 
 // cookArguments prepares arguments for the command-line call
-func (cook *ConsoleCommandCook) CookArguments(par *consolenode.ConsoleCommandParams) map[string]interface{} {
+func (cook *ConsoleCommandCook) CookArguments(par *coinharness.ConsoleCommandNodeParams) map[string]interface{} {
 	result := make(map[string]interface{})
 
 	result["txindex"] = commandline.NoArgumentValue
@@ -63,7 +61,7 @@ func (cook *ConsoleCommandCook) CookArguments(par *consolenode.ConsoleCommandPar
 	if par.MiningAddress != nil {
 		result["miningaddr"] = par.MiningAddress.String()
 	}
-	result[dcrharness.NetworkFor(par.Network)] = commandline.NoArgumentValue
+	result[NetworkFor(par.Network)] = commandline.NoArgumentValue
 
 	commandline.ArgumentsCopyTo(par.ExtraArguments, result)
 	return result
