@@ -198,8 +198,8 @@ func (c *RPCClient) ValidateAddress(address coinharness.Address) (*coinharness.V
 	return result, nil
 }
 
-func (c *RPCClient) GetBalance(account string) (*coinharness.GetBalanceResult, error) {
-	legacy, err := c.rpc.GetBalance(account)
+func (c *RPCClient) GetBalance() (*coinharness.GetBalanceResult, error) {
+	legacy, err := c.rpc.GetBalance("*")
 	// *dcrjson.ValidateAddressWalletResult
 	if err != nil {
 		return nil, err
