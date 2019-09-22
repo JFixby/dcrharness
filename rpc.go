@@ -2,7 +2,6 @@ package dcrharness
 
 import (
 	"fmt"
-	"github.com/decred/dcrd/chaincfg"
 	"github.com/decred/dcrd/chaincfg/chainhash"
 	"github.com/decred/dcrd/dcrjson"
 	"github.com/decred/dcrd/dcrutil"
@@ -37,6 +36,16 @@ func (f *RPCClientFactory) NewRPCConnection(config coinharness.RPCConnectionConf
 	}
 
 	return NewRPCClient(cfg, h)
+}
+
+func NewRPCClient(config *rpcclient.ConnConfig, handlers *rpcclient.NotificationHandlers) (coinharness.RPCClient, error) {
+	legacy, err := rpcclient.New(config, handlers)
+	if err != nil {
+		return nil, err
+	}
+
+	result := &RPCClient{rpc: legacy}
+	return result, nil
 }
 
 type RPCClient struct {
@@ -125,8 +134,24 @@ func (c *RPCClient) SendRawTransaction(tx *coinharness.MessageTx, allowHighFees 
 	return r, e
 }
 
-func (c *RPCClient) GetBlock(hash coinharness.Hash) (coinharness.Block, error) {
-	return c.rpc.GetBlock(hash.(*chainhash.Hash))
+func (c *RPCClient) GetBlock(hash coinharness.Hash) (*coinharness.MsgBlock, error) {
+	block, err := c.rpc.GetBlock(hash.(*chainhash.Hash)) //*wire.MsgBlock
+	if err != nil {
+		return nil, err
+	}
+
+	b := &coinharness.MsgBlock{}
+
+	ttx := []*coinharness.MessageTx{}
+	for _, ti := range block.Transactions {
+		ttx = append(ttx,
+			TransactionRawToTx(ti),
+		)
+	}
+
+	b.Transactions = ttx
+
+	return b, nil
 }
 
 func (c *RPCClient) GetPeerInfo() ([]coinharness.PeerInfo, error) {
@@ -143,16 +168,6 @@ func (c *RPCClient) GetPeerInfo() ([]coinharness.PeerInfo, error) {
 
 	}
 	return l, nil
-}
-
-func NewRPCClient(config *rpcclient.ConnConfig, handlers *rpcclient.NotificationHandlers) (coinharness.RPCClient, error) {
-	legacy, err := rpcclient.New(config, handlers)
-	if err != nil {
-		return nil, err
-	}
-
-	result := &RPCClient{rpc: legacy}
-	return result, nil
 }
 
 func (c *RPCClient) GetNewAddress(account string) (coinharness.Address, error) {
@@ -230,20 +245,4 @@ func (c *RPCClient) GetBuildVersion() (coinharness.BuildVersion, error) {
 	//}
 	//return legacy, nil
 	return nil, fmt.Errorf("decred does not support this feature (GetBuildVersion)")
-}
-
-type Address struct {
-	Address dcrutil.Address
-}
-
-func (c *Address) String() string {
-	return c.Address.String()
-}
-
-func (c *Address) Internal() interface{} {
-	return c.Address
-}
-
-func (c *Address) IsForNet(net coinharness.Network) bool {
-	return c.Address.IsForNet(net.Params().(*chaincfg.Params))
 }

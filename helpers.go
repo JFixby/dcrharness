@@ -360,6 +360,28 @@ func TransactionTxToRaw(tx *coinharness.MessageTx) *wire.MsgTx {
 	return ttx
 }
 
+func TransactionRawToTx(tx *wire.MsgTx) *coinharness.MessageTx {
+	ttx := &coinharness.MessageTx{
+		Version:  int32(tx.Version),
+		LockTime: tx.LockTime,
+	}
+	for _, ti := range tx.TxIn {
+		ttx.TxIn = append(ttx.TxIn,
+			&coinharness.TxIn{
+				Amount: coinharness.CoinsAmount{ti.ValueIn},
+			},
+		)
+	}
+	for _, to := range tx.TxOut {
+		ttx.TxOut = append(ttx.TxOut,
+			&coinharness.TxOut{
+				Amount: coinharness.CoinsAmount{to.Value},
+			},
+		)
+	}
+	return ttx
+}
+
 func PayToAddrScript(addr coinharness.Address) ([]byte, error) {
 	return txscript.PayToAddrScript(addr.(dcrutil.Address))
 }
