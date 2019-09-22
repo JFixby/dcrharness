@@ -213,6 +213,19 @@ func (c *RPCClient) GetBestBlock() (coinharness.Hash, int64, error) {
 	return c.rpc.GetBestBlock()
 }
 
+func (c *RPCClient) ListAccounts() (map[string]coinharness.CoinsAmount, error) {
+	l, err := c.rpc.ListAccounts()
+	if err != nil {
+		return nil, err
+	}
+
+	r := make(map[string]coinharness.CoinsAmount)
+	for k, v := range l {
+		r[k] = coinharness.CoinsAmount{int64(v)}
+	}
+	return r, nil
+}
+
 func (c *RPCClient) CreateNewAccount(account string) error {
 	return c.rpc.CreateNewAccount(account)
 }
