@@ -57,7 +57,7 @@ func newMemWallet(net coinharness.Network, harnessHDSeed coinharness.Seed) (*InM
 		hdIndex:           1,
 		hdRoot:            hdRoot,
 		addrs:             addrs,
-		utxos:             make(map[wire.OutPoint]*utxo),
+		utxos:             make(map[coinharness.OutPoint]*utxo),
 		chainUpdateSignal: make(chan string),
 		reorgJournal:      make(map[int64]*undoEntry),
 		RPCClientFactory:  clientFac,

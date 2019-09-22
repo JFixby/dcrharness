@@ -189,7 +189,7 @@ func (c *RPCClient) GetBalance(account string) (*coinharness.GetBalanceResult, e
 	}
 	result := &coinharness.GetBalanceResult{
 		BlockHash:      legacy.BlockHash,
-		TotalSpendable: legacy.TotalSpendable,
+		TotalSpendable: coinharness.CoinsAmountFromFloat(legacy.TotalSpendable),
 	}
 	return result, nil
 }

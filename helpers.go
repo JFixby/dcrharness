@@ -340,14 +340,22 @@ func standardCoinbaseOpReturn(height int64, extraNonce uint64) ([]byte, error) {
 
 func TransactionTxToRaw(tx coinharness.CreatedTransactionTx) *wire.MsgTx {
 	ttx := &wire.MsgTx{
-		Version:  uint16(tx.Version()),
-		LockTime: tx.LockTime(),
+		Version:  uint16(tx.Version),
+		LockTime: tx.LockTime,
 	}
-	for _, ti := range tx.TxIn() {
-		ttx.TxIn = append(ttx.TxIn, ti.(*InputTx).Parent)
+	for _, ti := range tx.TxIn {
+		ttx.TxIn = append(ttx.TxIn,
+			&wire.TxIn{
+				ValueIn: ti.Amount.ToAtoms(),
+			},
+		)
 	}
-	for _, to := range tx.TxOut() {
-		ttx.TxOut = append(ttx.TxOut, to.(*OutputTx).Parent)
+	for _, to := range tx.TxOut {
+		ttx.TxOut = append(ttx.TxOut,
+			&wire.TxOut{
+				Value: to.Amount.ToAtoms(),
+			},
+		)
 	}
 	return ttx
 }
