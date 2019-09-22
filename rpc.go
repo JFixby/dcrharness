@@ -119,7 +119,7 @@ func (c *RPCClient) GetRawMempool(command interface{}) (result []coinharness.Has
 	return result, nil
 }
 
-func (c *RPCClient) SendRawTransaction(tx coinharness.CreatedTransactionTx, allowHighFees bool) (result coinharness.Hash, e error) {
+func (c *RPCClient) SendRawTransaction(tx coinharness.MessageTx, allowHighFees bool) (result coinharness.Hash, e error) {
 	txx := TransactionTxToRaw(tx)
 	r, e := c.rpc.SendRawTransaction(txx, allowHighFees)
 	return r, e
