@@ -338,7 +338,7 @@ func standardCoinbaseOpReturn(height int64, extraNonce uint64) ([]byte, error) {
 	return extraNonceScript, nil
 }
 
-func TransactionTxToRaw(tx coinharness.CreatedTransactionTx) *wire.MsgTx {
+func TransactionTxToRaw(tx coinharness.MessageTx) *wire.MsgTx {
 	ttx := &wire.MsgTx{
 		Version:  uint16(tx.Version),
 		LockTime: tx.LockTime,
