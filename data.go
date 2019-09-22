@@ -21,5 +21,3 @@ func (c *Address) Internal() interface{} {
 func (c *Address) IsForNet(net coinharness.Network) bool {
 	return c.Address.IsForNet(net.Params().(*chaincfg.Params))
 }
-
-

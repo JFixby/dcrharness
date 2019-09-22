@@ -213,7 +213,7 @@ func (c *RPCClient) GetBalance(account string) (*coinharness.GetBalanceResult, e
 		//TotalImmatureStakeGeneration: coinharness.CoinsAmountFromFloat(legacy.TotalImmatureStakeGeneration),
 		//TotalImmatureCoinbaseRewards: coinharness.CoinsAmountFromFloat(legacy.TotalImmatureCoinbaseRewards),
 	}
-
+	result.Balances = make(map[string]coinharness.GetAccountBalanceResult)
 	for _, v := range legacy.Balances {
 		x := coinharness.GetAccountBalanceResult{
 			AccountName:             v.AccountName,
