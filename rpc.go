@@ -65,6 +65,8 @@ func (c *RPCClient) ListUnspent() ([]*coinharness.Unspent, error) {
 		x.TxType = e.TxType
 		x.TxID = e.TxID
 		x.Confirmations = e.Confirmations
+		x.Amount = coinharness.CoinsAmountFromFloat(e.Amount)
+		x.Account = e.Account
 		r = append(r, x)
 	}
 	return r, nil
