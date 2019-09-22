@@ -363,3 +363,8 @@ func TransactionTxToRaw(tx *coinharness.MessageTx) *wire.MsgTx {
 func PayToAddrScript(addr coinharness.Address) ([]byte, error) {
 	return txscript.PayToAddrScript(addr.(dcrutil.Address))
 }
+
+func TxSerializeSize(msg *coinharness.MessageTx) int {
+	raw := TransactionTxToRaw(msg)
+	return raw.SerializeSize()
+}
