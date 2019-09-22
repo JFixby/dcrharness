@@ -203,7 +203,7 @@ func (c *RPCClient) GetBalance(account string) (*coinharness.GetBalanceResult, e
 		return nil, err
 	}
 	result := &coinharness.GetBalanceResult{
-		BlockHash:        legacy.BlockHash,
+		BlockHash: legacy.BlockHash,
 		//TotalSpendable:   coinharness.CoinsAmountFromFloat(legacy.TotalSpendable),
 		//TotalUnconfirmed: coinharness.CoinsAmountFromFloat(legacy.TotalUnconfirmed),
 		//
@@ -224,7 +224,7 @@ func (c *RPCClient) GetBalance(account string) (*coinharness.GetBalanceResult, e
 			VotingAuthority:         coinharness.CoinsAmountFromFloat(v.VotingAuthority),
 			ImmatureCoinbaseRewards: coinharness.CoinsAmountFromFloat(v.ImmatureCoinbaseRewards),
 		}
-		result.Balances = append(result.Balances, x)
+		result.Balances[v.AccountName] = x
 	}
 
 	return result, nil
