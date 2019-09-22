@@ -15,7 +15,7 @@ const stopSignal = "stopSignal"
 // chain.
 type chainUpdate struct {
 	blockHeight  int64
-	filteredTxns []*dcrutil.Tx
+	filteredTxns []*coinharness.Tx
 }
 
 // undoEntry is functionally the opposite of a chainUpdate. An undoEntry is
@@ -31,7 +31,7 @@ type undoEntry struct {
 // maturity period of direct coinbase outputs.
 type utxo struct {
 	pkScript       []byte
-	value          dcrutil.Amount
+	value          coinharness.CoinsAmount
 	maturityHeight int64
 	keyIndex       uint32
 	isLocked       bool
