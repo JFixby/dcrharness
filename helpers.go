@@ -359,3 +359,7 @@ func TransactionTxToRaw(tx *coinharness.MessageTx) *wire.MsgTx {
 	}
 	return ttx
 }
+
+func PayToAddrScript(addr coinharness.Address) ([]byte, error) {
+	return txscript.PayToAddrScript(addr.(dcrutil.Address))
+}
