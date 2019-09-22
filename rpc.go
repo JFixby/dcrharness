@@ -203,9 +203,30 @@ func (c *RPCClient) GetBalance(account string) (*coinharness.GetBalanceResult, e
 		return nil, err
 	}
 	result := &coinharness.GetBalanceResult{
-		BlockHash:      legacy.BlockHash,
-		TotalSpendable: coinharness.CoinsAmountFromFloat(legacy.TotalSpendable),
+		BlockHash:        legacy.BlockHash,
+		//TotalSpendable:   coinharness.CoinsAmountFromFloat(legacy.TotalSpendable),
+		//TotalUnconfirmed: coinharness.CoinsAmountFromFloat(legacy.TotalUnconfirmed),
+		//
+		//CumulativeTotal:              coinharness.CoinsAmountFromFloat(legacy.CumulativeTotal),
+		//TotalVotingAuthority:         coinharness.CoinsAmountFromFloat(legacy.TotalVotingAuthority),
+		//TotalLockedByTickets:         coinharness.CoinsAmountFromFloat(legacy.TotalLockedByTickets),
+		//TotalImmatureStakeGeneration: coinharness.CoinsAmountFromFloat(legacy.TotalImmatureStakeGeneration),
+		//TotalImmatureCoinbaseRewards: coinharness.CoinsAmountFromFloat(legacy.TotalImmatureCoinbaseRewards),
 	}
+
+	for _, v := range legacy.Balances {
+		x := coinharness.GetAccountBalanceResult{
+			AccountName:             v.AccountName,
+			Total:                   coinharness.CoinsAmountFromFloat(v.Total),
+			Spendable:               coinharness.CoinsAmountFromFloat(v.Spendable),
+			Unconfirmed:             coinharness.CoinsAmountFromFloat(v.Unconfirmed),
+			LockedByTickets:         coinharness.CoinsAmountFromFloat(v.LockedByTickets),
+			VotingAuthority:         coinharness.CoinsAmountFromFloat(v.VotingAuthority),
+			ImmatureCoinbaseRewards: coinharness.CoinsAmountFromFloat(v.ImmatureCoinbaseRewards),
+		}
+		result.Balances = append(result.Balances, x)
+	}
+
 	return result, nil
 }
 
