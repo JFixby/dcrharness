@@ -8,7 +8,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/decred/dcrd/blockchain"
 	"github.com/decred/dcrd/chaincfg/chainhash"
 	"github.com/decred/dcrd/dcrec/secp256k1"
 	"github.com/decred/dcrd/dcrutil"
@@ -61,6 +60,9 @@ type InMemoryWallet struct {
 
 	sync.RWMutex
 	RPCClientFactory coinharness.RPCClientFactory
+
+	NewTxFromBytes func(txBytes []byte) (*coinharness.Tx, error) //dcrutil.NewTxFromBytes(txBytes)
+	IsCoinBaseTx   func(*coinharness.MessageTx) (bool)           //blockchain.IsCoinBaseTx(mtx)
 }
 
 // Network returns current network of the wallet
@@ -169,7 +171,8 @@ func (m *InMemoryWallet) IngestBlock(header []byte, filteredTxns [][]byte) {
 
 	txns := make([]*coinharness.Tx, 0, len(filteredTxns))
 	for _, txBytes := range filteredTxns {
-		tx, err := dcrutil.NewTxFromBytes(txBytes)
+		tx, err := m.NewTxFromBytes(txBytes)
+
 		if err != nil {
 			panic(err)
 		}
@@ -243,7 +246,7 @@ func (wallet *InMemoryWallet) chainSyncer() {
 		}
 		for _, tx := range update.filteredTxns {
 			mtx := tx.MsgTx
-			isCoinbase := blockchain.IsCoinBaseTx(mtx)
+			isCoinbase := wallet.IsCoinBaseTx(mtx)
 			txHash := mtx.TxHash
 			wallet.evalOutputs(mtx.TxOut, txHash, isCoinbase, undo)
 			wallet.evalInputs(mtx.TxIn, undo)
@@ -414,51 +417,7 @@ func (wallet *InMemoryWallet) NewAddress(_ *coinharness.NewAddressArgs) (coinhar
 //		txSize      int
 //	)
 //
-//	for outPoint, utxo := range wallet.utxos {
-//		// Skip any outputs that are still currently immature or are
-//		// currently locked.
-//		if !utxo.isMature(wallet.currentHeight) || utxo.isLocked {
-//			continue
-//		}
-//
-//		amtSelected += utxo.value
-//
-//		// Add the selected output to the transaction, updating the
-//		// current tx size while accounting for the size of the future
-//		// sigScript.
-//		tx.AddTxIn(wire.NewTxIn(&outPoint, int64(utxo.value), nil))
-//		txSize = tx.SerializeSize() + spendSize*len(tx.TxIn)
-//
-//		// Calculate the fee required for the txn at this point
-//		// observing the specified fee rate. If we don't have enough
-//		// coins from he current amount selected to pay the fee, then
-//		// continue to grab more coins.
-//		reqFee := dcrutil.Amount(txSize * int(feeRate))
-//		if amtSelected-reqFee < amt {
-//			continue
-//		}
-//
-//		// If we have any change left over, then add an additional
-//		// output to the transaction reserved for change.
-//		changeVal := amtSelected - amt - reqFee
-//		if changeVal > 0 {
-//			addr, err := wallet.newAddress()
-//			if err != nil {
-//				return err
-//			}
-//			pkScript, err := txscript.PayToAddrScript(addr)
-//			if err != nil {
-//				return err
-//			}
-//			changeOutput := &wire.TxOut{
-//				Value:    int64(changeVal),
-//				PkScript: pkScript,
-//			}
-//			tx.AddTxOut(changeOutput)
-//		}
-//
-//		return nil
-//	}
+
 //
 //	// If we've reached this point, then coin selection failed due to an
 //	// insufficient amount of coins.
@@ -516,62 +475,98 @@ func (wallet *InMemoryWallet) SendOutputsWithoutChange(outputs []*wire.TxOut,
 //// This function is safe for concurrent access.
 //func (wallet *InMemoryWallet) CreateTransaction(args *coinharness.CreateTransactionArgs) (coinharness.MessageTx, error) {
 //
-//	wallet.Lock()
-//	defer wallet.Unlock()
-//
-//	tx := wire.NewMsgTx()
-//
-//	// Tally up the total amount to be sent in order to perform coin
-//	// selection shortly below.
-//	var outputAmt dcrutil.Amount
-//	for _, output := range args.Outputs {
-//		outputAmt += dcrutil.Amount(output.Value())
-//		tx.AddTxOut(output.(*dcrharness.TxOut).Parent)
-//	}
-//
-//	// Attempt to fund the transaction with spendable utxos.
-//	if err := wallet.fundTx(tx, outputAmt, dcrutil.Amount(args.FeeRate.(int))); err != nil {
-//		return nil, err
-//	}
-//
-//	// Populate all the selected inputs with valid sigScript for spending.
-//	// Along the way record all outputs being spent in order to avoid a
-//	// potential double spend.
-//	spentOutputs := make([]*utxo, 0, len(tx.TxIn))
-//	for i, txIn := range tx.TxIn {
-//		outPoint := txIn.PreviousOutPoint
-//		utxo := wallet.utxos[outPoint]
-//
-//		extendedKey, err := wallet.hdRoot.Child(utxo.keyIndex)
-//		if err != nil {
-//			return nil, err
-//		}
-//
-//		privKey, err := extendedKey.ECPrivKey()
-//		if err != nil {
-//			return nil, err
-//		}
-//
-//		sigScript, err := txscript.SignatureScript(tx, i, utxo.pkScript,
-//			txscript.SigHashAll, privKey, true)
-//		if err != nil {
-//			return nil, err
-//		}
-//
-//		txIn.SignatureScript = sigScript
-//
-//		spentOutputs = append(spentOutputs, utxo)
-//	}
-//
-//	// As these outputs are now being spent by this newly created
-//	// transaction, mark the outputs are "locked". This action ensures
-//	// these outputs won't be double spent by any subsequent transactions.
-//	// These locked outputs can be freed via a call to UnlockOutputs.
-//	for _, utxo := range spentOutputs {
-//		utxo.isLocked = true
-//	}
-//	return &dcrharness.MessageTx{tx}, nil
+
 //}
+
+func (wallet *InMemoryWallet) ListUnspent() (result []*coinharness.Unspent, err error) {
+	wallet.Lock()
+	defer wallet.Unlock()
+
+	for _, utxo := range wallet.utxos {
+		// Skip any outputs that are still currently immature or are
+		// currently locked.
+		if !utxo.isMature(wallet.currentHeight) || utxo.isLocked {
+			continue
+		}
+		x := &coinharness.Unspent{
+			Account:      "",
+			Amount:       utxo.value,
+		}
+		result = append(result, x)
+
+		// Calculate the fee required for the txn at this point
+		// observing the specified fee rate. If we don't have enough
+		// coins from he current amount selected to pay the fee, then
+		// continue to grab more coins.
+		reqFee := dcrutil.Amount(txSize * int(feeRate))
+		if amtSelected-reqFee < amt {
+			continue
+		}
+
+		// If we have any change left over, then add an additional
+		// output to the transaction reserved for change.
+		changeVal := amtSelected - amt - reqFee
+		if changeVal > 0 {
+			addr, err := wallet.newAddress()
+			if err != nil {
+				return err
+			}
+			pkScript, err := txscript.PayToAddrScript(addr)
+			if err != nil {
+				return err
+			}
+			changeOutput := &wire.TxOut{
+				Value:    int64(changeVal),
+				PkScript: pkScript,
+			}
+			tx.AddTxOut(changeOutput)
+		}
+
+		return nil
+	}
+
+	if err := wallet.fundTx(tx, outputAmt, dcrutil.Amount(args.FeeRate.(int))); err != nil {
+		return nil, err
+	}
+
+	// Populate all the selected inputs with valid sigScript for spending.
+	// Along the way record all outputs being spent in order to avoid a
+	// potential double spend.
+	spentOutputs := make([]*utxo, 0, len(tx.TxIn))
+	for i, txIn := range tx.TxIn {
+		outPoint := txIn.PreviousOutPoint
+		utxo := wallet.utxos[outPoint]
+
+		extendedKey, err := wallet.hdRoot.Child(utxo.keyIndex)
+		if err != nil {
+			return nil, err
+		}
+
+		privKey, err := extendedKey.ECPrivKey()
+		if err != nil {
+			return nil, err
+		}
+
+		sigScript, err := txscript.SignatureScript(tx, i, utxo.pkScript,
+			txscript.SigHashAll, privKey, true)
+		if err != nil {
+			return nil, err
+		}
+
+		txIn.SignatureScript = sigScript
+
+		spentOutputs = append(spentOutputs, utxo)
+	}
+
+	// As these outputs are now being spent by this newly created
+	// transaction, mark the outputs are "locked". This action ensures
+	// these outputs won't be double spent by any subsequent transactions.
+	// These locked outputs can be freed via a call to UnlockOutputs.
+	for _, utxo := range spentOutputs {
+		utxo.isLocked = true
+	}
+	return &dcrharness.MessageTx{tx}, nil
+}
 
 // UnlockOutputs unlocks any outputs which were previously locked due to
 // being selected to fund a transaction via the CreateTransaction method.
