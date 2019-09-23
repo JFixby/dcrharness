@@ -60,15 +60,22 @@ func (c *RPCClient) ListUnspent() ([]*coinharness.Unspent, error) {
 	var r []*coinharness.Unspent
 	for _, e := range result {
 		x := &coinharness.Unspent{}
-		x.Address = e.Address
-		x.Spendable = e.Spendable
-		x.TxType = e.TxType
+
 		x.TxID = e.TxID
-		x.Confirmations = e.Confirmations
-		x.Amount = coinharness.CoinsAmountFromFloat(e.Amount)
+		x.Vout = e.Vout
+		x.Tree = e.Tree
+		x.TxType = e.TxType
+		x.Address = e.Address
 		x.Account = e.Account
+		x.ScriptPubKey = e.ScriptPubKey
+		x.RedeemScript = e.RedeemScript
+		x.Amount = coinharness.CoinsAmountFromFloat(e.Amount)
+		x.Confirmations = e.Confirmations
+		x.Spendable = e.Spendable
+
 		r = append(r, x)
 	}
+
 	return r, nil
 }
 

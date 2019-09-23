@@ -338,48 +338,81 @@ func standardCoinbaseOpReturn(height int64, extraNonce uint64) ([]byte, error) {
 	return extraNonceScript, nil
 }
 
-func TransactionTxToRaw(tx *coinharness.MessageTx) *wire.MsgTx {
-	ttx := &wire.MsgTx{
-		Version:  uint16(tx.Version),
-		LockTime: tx.LockTime,
+func TransactionTxToRaw(chTx *coinharness.MessageTx) *wire.MsgTx {
+	wireTx := &wire.MsgTx{
+		//CachedHash: chTx.CachedHash.(*chainhash.Hash),
+		SerType:    wire.TxSerializeType(chTx.SerType),
+		Version:    uint16(chTx.Version),
+		LockTime:   chTx.LockTime,
+		Expiry:     chTx.Expiry,
 	}
-	for _, ti := range tx.TxIn {
-		ttx.TxIn = append(ttx.TxIn,
+	for _, ti := range chTx.TxIn {
+		wireTx.TxIn = append(wireTx.TxIn,
 			&wire.TxIn{
-				ValueIn: ti.Amount.ToAtoms(),
+				ValueIn:         ti.ValueIn.ToAtoms(),
+				SignatureScript: ti.SignatureScript,
+				BlockHeight:     ti.BlockHeight,
+				BlockIndex:      ti.BlockIndex,
+				PreviousOutPoint: wire.OutPoint{
+					Hash:  ti.PreviousOutPoint.Hash.(chainhash.Hash),
+					Index: ti.PreviousOutPoint.Index,
+					Tree:  ti.PreviousOutPoint.Tree,
+				},
 			},
 		)
 	}
-	for _, to := range tx.TxOut {
-		ttx.TxOut = append(ttx.TxOut,
+	for _, to := range chTx.TxOut {
+		wireTx.TxOut = append(wireTx.TxOut,
 			&wire.TxOut{
-				Value: to.Amount.ToAtoms(),
+				Value:    to.Value.ToAtoms(),
+				Version:  to.Version,
+				PkScript: to.PkScript,
 			},
 		)
 	}
-	return ttx
+
+	return wireTx
 }
 
-func TransactionRawToTx(tx *wire.MsgTx) *coinharness.MessageTx {
-	ttx := &coinharness.MessageTx{
-		Version:  int32(tx.Version),
-		LockTime: tx.LockTime,
+func TransactionRawToTx(wireTx *wire.MsgTx) *coinharness.MessageTx {
+	wireTx = wireTx.Copy()
+	chTx := &coinharness.MessageTx{
+		//CachedHash: wireTx.CachedHash,
+		SerType:    uint16(wireTx.SerType),
+		Version:    int32(wireTx.Version),
+		LockTime:   wireTx.LockTime,
+		Expiry:     wireTx.Expiry,
 	}
-	for _, ti := range tx.TxIn {
-		ttx.TxIn = append(ttx.TxIn,
+	for _, ti := range wireTx.TxIn {
+		chTx.TxIn = append(chTx.TxIn,
 			&coinharness.TxIn{
-				Amount: coinharness.CoinsAmount{ti.ValueIn},
+				ValueIn:         coinharness.CoinsAmount{ti.ValueIn},
+				SignatureScript: ti.SignatureScript,
+				BlockHeight:     ti.BlockHeight,
+				BlockIndex:      ti.BlockIndex,
+				PreviousOutPoint: coinharness.OutPoint{
+					Hash:  ti.PreviousOutPoint.Hash,
+					Index: ti.PreviousOutPoint.Index,
+					Tree:  ti.PreviousOutPoint.Tree,
+				},
 			},
 		)
 	}
-	for _, to := range tx.TxOut {
-		ttx.TxOut = append(ttx.TxOut,
+	for _, to := range wireTx.TxOut {
+		chTx.TxOut = append(chTx.TxOut,
 			&coinharness.TxOut{
-				Amount: coinharness.CoinsAmount{to.Value},
+				Value:    coinharness.CoinsAmount{to.Value},
+				Version:  to.Version,
+				PkScript: to.PkScript,
 			},
 		)
 	}
-	return ttx
+
+	chTx.TxHash = func() coinharness.Hash {
+		return wireTx.TxHash()
+	}
+
+	return chTx
 }
 
 func PayToAddrScript(addr coinharness.Address) ([]byte, error) {
