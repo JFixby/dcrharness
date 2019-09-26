@@ -125,7 +125,7 @@ func ConvertHandlers(handlers *coinharness.NotificationHandlers) *rpcclient.Noti
 		},
 		//
 		//OnTxAcceptedVerbose:     handlers.OnTxAcceptedVerbose,
-		OnDcrdConnected: handlers.OnDcrdConnected,
+		OnDcrdConnected: handlers.OnNodeConnected,
 		//
 		OnAccountBalance: func(
 			account string,
