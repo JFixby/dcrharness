@@ -1,6 +1,7 @@
 package dcrharness
 
 import (
+	"github.com/decred/dcrd/blockchain"
 	"github.com/decred/dcrd/chaincfg"
 	"github.com/decred/dcrd/dcrec/secp256k1"
 	"github.com/decred/dcrd/dcrutil"
@@ -55,8 +56,30 @@ func (f *WalletFactory) NewWallet(cfg *coinharness.TestWalletConfig) coinharness
 		RPCClientFactory:    clientFac,
 		PrivateKeyKeyToAddr: PrivateKeyKeyToAddr,
 		ReadBlockHeader:     ReadBlockHeader,
+		NewTxFromBytes:      NewTxFromBytes,
+		IsCoinBaseTx:        IsCoinBaseTx,
 	}
+	//NewTxFromBytes      func(txBytes []byte) (*Tx, error) //dcrutil.NewTxFromBytes(txBytes)
+	//IsCoinBaseTx        func(*MessageTx) bool             //blockchain.IsCoinBaseTx(mtx)
+}
 
+func IsCoinBaseTx(tx *coinharness.MessageTx) bool {
+	mtx := TransactionTxToRaw(tx)
+	return blockchain.IsCoinBaseTx(mtx)
+}
+
+func NewTxFromBytes(txBytes []byte) (*coinharness.Tx, error) {
+	dcrTx, err := dcrutil.NewTxFromBytes(txBytes)
+	if err != nil {
+		return nil, err
+	}
+	chTx := &coinharness.Tx{
+		Hash:   dcrTx.Hash(),
+		TxTree: dcrTx.Tree(),
+		Index:  dcrTx.Index(),
+		MsgTx:  TransactionRawToTx(dcrTx.MsgTx()),
+	}
+	return chTx, nil
 }
 
 // PrivateKeyKeyToAddr maps the passed private to corresponding p2pkh address.
