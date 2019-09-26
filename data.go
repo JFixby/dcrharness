@@ -50,10 +50,6 @@ type PublicKey struct {
 	legacy ecdsa.PublicKey
 }
 
-func (k PublicKey) SerializeCompressed() []byte {
-	((*secp256k1.PrivateKey)(k.legacy)).SerializeCompressed()
-}
-
 type ExtendedKey struct {
 	legacy *hdkeychain.ExtendedKey
 }

@@ -2,6 +2,7 @@ package dcrharness
 
 import (
 	"github.com/decred/dcrd/chaincfg"
+	"github.com/decred/dcrd/dcrec/secp256k1"
 	"github.com/decred/dcrd/dcrutil"
 	"github.com/decred/dcrd/hdkeychain"
 	"github.com/decred/dcrd/wire"
@@ -60,14 +61,23 @@ func (f *WalletFactory) NewWallet(cfg *coinharness.TestWalletConfig) coinharness
 
 // PrivateKeyKeyToAddr maps the passed private to corresponding p2pkh address.
 func PrivateKeyKeyToAddr(key coinharness.PrivateKey, net coinharness.Network) (coinharness.Address, error) {
-	pubKey := (key.PublicKey())
-	//.(*secp256k1.PublicKey)
-	serializedKey := pubKey.SerializeCompressed()
-	pubKeyAddr, err := dcrutil.NewAddressSecpPubKey(serializedKey, net.Params().(*chaincfg.Params))
+	k := key.(*PrivateKey).legacy
+	addr, err := keyToAddr(k, net.Params().(*chaincfg.Params))
 	if err != nil {
 		return nil, err
 	}
-	return &Address{Address: pubKeyAddr.AddressPubKeyHash()}, nil
+	return &Address{Address: addr}, nil
+}
+
+// keyToAddr maps the passed private to corresponding p2pkh address.
+func keyToAddr(key *secp256k1.PrivateKey, net *chaincfg.Params) (dcrutil.Address, error) {
+	pubKey := (*secp256k1.PublicKey)(&key.PublicKey)
+	serializedKey := pubKey.SerializeCompressed()
+	pubKeyAddr, err := dcrutil.NewAddressSecpPubKey(serializedKey, net)
+	if err != nil {
+		return nil, err
+	}
+	return pubKeyAddr.AddressPubKeyHash(), nil
 }
 
 func ReadBlockHeader(header []byte) coinharness.BlockHeader {
