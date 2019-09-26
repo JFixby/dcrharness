@@ -14,10 +14,28 @@ import (
 type RPCClientFactory struct {
 }
 
-func (f *RPCClientFactory) NewRPCConnection(config coinharness.RPCConnectionConfig, handlers coinharness.RPCClientNotificationHandlers) (coinharness.RPCClient, error) {
+func (f *RPCClientFactory) NewRPCConnection(config coinharness.RPCConnectionConfig, handlers *coinharness.NotificationHandlers) (coinharness.RPCClient, error) {
 	var h *rpcclient.NotificationHandlers
 	if handlers != nil {
-		h = handlers.(*rpcclient.NotificationHandlers)
+		h = &rpcclient.NotificationHandlers{
+			OnClientConnected:       handlers.OnClientConnected,
+			OnBlockConnected:        handlers.OnBlockConnected,
+			OnBlockDisconnected:     handlers.OnBlockDisconnected,
+			OnRelevantTxAccepted:    handlers.OnRelevantTxAccepted,
+			OnWinningTickets:        handlers.OnWinningTickets,
+			OnSpentAndMissedTickets: handlers.OnSpentAndMissedTickets,
+			OnNewTickets:            handlers.OnNewTickets,
+			OnStakeDifficulty:       handlers.OnStakeDifficulty,
+			OnTxAccepted:            handlers.OnTxAccepted,
+			//OnTxAcceptedVerbose:     handlers.OnTxAcceptedVerbose,
+			OnDcrdConnected:         handlers.OnDcrdConnected,
+			OnAccountBalance:        handlers.OnAccountBalance,
+			OnWalletLockState:       handlers.OnWalletLockState,
+			OnTicketsPurchased:      handlers.OnTicketsPurchased,
+			OnVotesCreated:          handlers.OnVotesCreated,
+			OnRevocationsCreated:    handlers.OnRevocationsCreated,
+			OnUnknownNotification:   handlers.OnUnknownNotification,
+		}
 	}
 
 	file := config.CertificateFile
