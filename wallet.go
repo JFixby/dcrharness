@@ -1,6 +1,9 @@
 package dcrharness
 
 import (
+	"github.com/decred/dcrd/chaincfg"
+	"github.com/decred/dcrd/dcrec/secp256k1"
+	"github.com/decred/dcrd/dcrutil"
 	"github.com/jfixby/coinharness"
 	"github.com/jfixby/pin"
 	"github.com/jfixby/pin/commandline"
@@ -69,3 +72,22 @@ func (cook *WalletConsoleCommandCook) CookArguments(par *coinharness.ConsoleComm
 	commandline.ArgumentsCopyTo(par.ExtraArguments, result)
 	return result
 }
+
+// keyToAddr maps the passed private to corresponding p2pkh address.
+func keyToAddr(key coinharness.PrivateKey, net coinharness.Network) (coinharness.Address, error) {
+	//secp256k1.//
+	pubKey := key.(*secp256k1.PublicKey)(&key.PublicKey)
+	serializedKey := pubKey.SerializeCompressed()
+	pubKeyAddr, err := dcrutil.NewAddressSecpPubKey(serializedKey, net.Params().(*chaincfg.Params))
+	if err != nil {
+		return nil, err
+	}
+	dcraddress := pubKeyAddr.AddressPubKeyHash()
+	return &Address{Address: dcraddress}, nil
+}
+
+//var hdr wire.BlockHeader
+//if err := hdr.FromBytes(header); err != nil {
+//	panic(err)
+//}
+//height := int64(hdr.Height)
