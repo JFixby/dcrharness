@@ -1,6 +1,7 @@
 package dcrharness
 
 import (
+	"crypto/ecdsa"
 	"github.com/decred/dcrd/chaincfg"
 	"github.com/decred/dcrd/dcrec/secp256k1"
 	"github.com/decred/dcrd/dcrutil"
@@ -42,7 +43,15 @@ type PrivateKey struct {
 }
 
 func (k *PrivateKey) PublicKey() coinharness.PublicKey {
-	return k.legacy.PublicKey
+	return PublicKey{legacy: k.legacy.PublicKey}
+}
+
+type PublicKey struct {
+	legacy ecdsa.PublicKey
+}
+
+func (k PublicKey) SerializeCompressed() []byte {
+	((*secp256k1.PrivateKey)(k.legacy)).SerializeCompressed()
 }
 
 type ExtendedKey struct {
