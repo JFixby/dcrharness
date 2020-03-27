@@ -17,5 +17,6 @@ Decred harness
  go clean -testcache
  go test ./...
 ```
+
  ## License
  This code is licensed under the [copyfree](http://copyfree.org) ISC License.
